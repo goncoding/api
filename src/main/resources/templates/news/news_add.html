@@ -7,15 +7,15 @@
   <div class="py-5 text-center">
     <h2>상품 등록</h2>
   </div>
-  <form th:action method="post" enctype="multipart/form-data">
+  <form th:action="@{/kr/news}" method="post" enctype="multipart/form-data">
     <ul>
-      <li><input type="text" id="" name="contactMail" value="" class="st-inp"></li>
-      <li>제목<input type="text" id="" name="contactMail" value="" class="st-inp"></li>
-      <li>회사명<input type="text" id="" name="contactMail" value="" class="st-inp"></li>
-      <li>내용<textarea id="contactContent" name="contactContent" class="st-textarea"></textarea></li>
-      <li>이동링크<input type="text" id="" name="contactMail" value="" class="st-inp"></li>
-      <li>썸네일<input type="file" name="attachFile" ></li>
-      <li>첨부파일(멀티플)<input type="file" multiple="multiple" name="attachFileList" ></li>
+      <li>nbType<input type="text" id="" name="nbType" value="" class="st-inp"></li>
+      <li>제목<input type="text" id="" name="title" value="" class="st-inp"></li>
+      <li>내용<textarea id="contactContent" name="content" class="st-textarea"></textarea></li>
+      <li>회사명<input type="text" id="" name="newCompany" value="" class="st-inp"></li>
+      <li>이동링크<input type="text" id="" name="link" value="" class="st-inp"></li>
+      <li>썸네일<input type="file" name="thumbnailFile" ></li>
+      <li>첨부파일(멀티플)<input type="file" multiple="multiple" name="newsFiles" ></li>
     </ul>
     <input type="submit"/>
   </form>

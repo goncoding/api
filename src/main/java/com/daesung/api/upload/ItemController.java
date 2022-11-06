@@ -2,6 +2,7 @@ package com.daesung.api.upload;
 
 import com.daesung.api.news.repository.NewsFileRepository;
 import com.daesung.api.news.repository.NewsThumbnailFileRepository;
+import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
-import java.util.List;
 
 @Controller
 @Slf4j
@@ -21,7 +21,7 @@ public class ItemController {
 
     private final NewsFileRepository newsFileRepository;
     private final NewsThumbnailFileRepository newsThumbnailFileRepository;
-    private final FileStroe fileStroe;
+    private final FileStore fileStroe;
     
 
     @GetMapping("/items/new")
@@ -34,7 +34,9 @@ public class ItemController {
 
         System.out.println("itemForm = " + itemForm);
 
-        UploadFile uploadFile = fileStroe.storeFile(itemForm.getAttachFile());
+        String savePath = "/news";
+
+        UploadFile uploadFile = fileStroe.storeFile(itemForm.getAttachFile(), savePath);
 
 //        List<UploadFile02> uploadFileList = fileStroe.storeFiles(itemForm.getAttachFileList());
 //

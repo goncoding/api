@@ -24,10 +24,12 @@ public class News extends BaseTimeEntity {
     @Column(name = "nb_no")
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     private NbType nbType; //NE("뉴스"), RE("보도");
+
     private String title;
     private String content;
-    private String viewCnt;
+    private Long viewCnt;
     private String newCompany; //회사명
     private String link;
 

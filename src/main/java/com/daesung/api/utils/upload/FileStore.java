@@ -1,8 +1,7 @@
-package com.daesung.api.upload;
+package com.daesung.api.utils.upload;
 
 
 import com.daesung.api.utils.StrUtil;
-import com.daesung.api.utils.upload.UploadFile;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,35 +15,32 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-public class FileStroe {
+public class FileStore {
 
     @Value("${file.dir}")
     private String fileDir;
 
-    String savePath = "/news";
     int size = 10;
-//    public List<UploadFile02> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
-//        List<UploadFile02> storeFileResult = new ArrayList<>();
-//        for (MultipartFile multipartFile : multipartFiles) {
-//            if (!multipartFile.isEmpty()) {
-//                storeFileResult.add(storeFile(multipartFile));
-//            }
-//        }
-//        return storeFileResult;
-//    }
 
-    public UploadFile storeFile(MultipartFile multipartFile) throws IOException {
+    //다중 upload 처리
+    public List<UploadFile> storeFileList(List<MultipartFile> multipartFiles, String savePath) throws IOException {
+        List<UploadFile> storeFileResult = new ArrayList<>();
+        for (MultipartFile multipartFile : multipartFiles) {
+            if (!multipartFile.isEmpty()) {
+                storeFileResult.add(storeFile(multipartFile, savePath));
+            }
+        }
+        return storeFileResult;
+    }
+
+    //단일 upload 처리
+    public UploadFile storeFile(MultipartFile multipartFile, String savePath) throws IOException {
 
         int max = 10; //최대사이즈 : 10MB;
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         Calendar c1 = Calendar.getInstance();
         String strToday = sdf.format(c1.getTime());
-
-
-        if (multipartFile.isEmpty()) {
-            return null;
-        }
 
         if (multipartFile != null && multipartFile.getSize() > 0 && !StrUtil.isEmpty(multipartFile.getName())) {
 
@@ -54,7 +50,8 @@ public class FileStroe {
 
             String originalFilename = multipartFile.getOriginalFilename();
 
-            String originName = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("\\") + 1); //IE, EDGE has file path
+            String originName = multipartFile.getOriginalFilename()
+                    .substring(multipartFile.getOriginalFilename().lastIndexOf("\\") + 1); //IE, EDGE has file path
 
             //서버저장
             String uuid = UUID.randomUUID().toString();
@@ -67,19 +64,20 @@ public class FileStroe {
             if (noFileName) return up.setFileNameEmpty(true);
             if (sizeOver) return up.setSizeOver(true);
             if (badType) return up.setWrongType(true);
-
+            //coffee01.png
             String ext = originName.substring(originName.lastIndexOf('.'));
             String originName2 = originName.substring(0, originName.lastIndexOf('.'));
             String newFileName = originName2 + "_" + UUID.randomUUID().toString() + ext;
 
             File upFile = new File(dir, newFileName);
-            upFile.getParentFile().mkdirs();
+            if (!upFile.exists()) {
+                upFile.getParentFile().mkdirs();
+            }
 
             multipartFile.transferTo(upFile);
-            return up.setNewName(originName)
-                    .setOriginName(newFileName)
+            return up.setNewName(newFileName)
+                    .setOriginName(originName)
                     .setRealPath(String.format("%s/%s", dir, newFileName));
-
 
         }
 
