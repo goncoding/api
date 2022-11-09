@@ -1,11 +1,10 @@
 package com.daesung.api.news.web;
 
 import com.daesung.api.common.BaseControllerTest;
-import com.daesung.api.events.EventRepository;
 import com.daesung.api.news.domain.News;
 import com.daesung.api.news.domain.enumType.NbType;
 import com.daesung.api.news.repository.NewsRepository;
-import com.daesung.api.news.web.dto.NewsForm;
+import com.daesung.api.news.web.dto.NewsDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
@@ -14,8 +13,8 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.Commit;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,7 +55,7 @@ class NewsControllerTest extends BaseControllerTest {
     @Commit
     public void test0123() throws Exception {
 
-        NewsForm newsForm = NewsForm.builder()
+        NewsDto newsDto = NewsDto.builder()
 //                .nbType(NbType.NE.name())
 //                .title("title..")
 //                .content("content...")
@@ -66,7 +65,7 @@ class NewsControllerTest extends BaseControllerTest {
                 .language("ko")
                 .build();
 
-        News news = modelMapper.map(newsForm, News.class);
+        News news = modelMapper.map(newsDto, News.class);
 
         News save = newsRepository.save(news);
 
@@ -74,30 +73,50 @@ class NewsControllerTest extends BaseControllerTest {
 
     }
 
-    @DisplayName("뉴스 insert  정상")
+    @DisplayName("30개의 new를 10개씩 두번째 페이지 조회하기..")
     @Test
     public void test01() throws Exception {
 
-        NewsForm newsForm = NewsForm.builder()
-//                .nbType(NbType.RE.name())
-                .title("title..")
-                .content("content...")
-//                .newCompany()
-//                .link()
-                .viewCnt(21L)
-                .language("ko")
-                .build();
-
-        mockMvc.perform(post("/news")
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .accept(MediaTypes.HAL_JSON_VALUE)
-                .content(objectMapper.writeValueAsString(newsForm))
+        mockMvc.perform(get("/api/kr/news")
+                .param("page","1")
+                .param("size","5")
         )
                 .andDo(print())
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
 
+    }
 
+    @DisplayName("기존의 이벤트 하나로 조회하기")
+    @Test
+    public void _테스트() throws Exception{
+
+        Long id = 2L;
+
+        mockMvc.perform(get("/api/kr/news/"+id)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

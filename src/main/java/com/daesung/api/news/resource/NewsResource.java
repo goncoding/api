@@ -11,6 +11,7 @@ public class NewsResource extends EntityModel<News> {
 
     public NewsResource(News news, Link... links) {
         super(news, links);
-        add(linkTo(NewsController.class).slash(news.getId()).withSelfRel());
+        add(linkTo(NewsController.class,news.getLanguage()).slash(news.getId()).withSelfRel());
     }
+
 }

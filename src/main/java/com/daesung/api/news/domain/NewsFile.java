@@ -1,6 +1,8 @@
 package com.daesung.api.news.domain;
 
 import com.daesung.api.common.RegTimeEntity;
+import com.daesung.api.news.domain.enumType.ShowYn;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -21,8 +23,9 @@ public class NewsFile extends RegTimeEntity {
     @Column(name = "news_file_no")
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "nb_no")
+    @JoinColumn(name = "news_id")
     private News news;
 
     @Column(length = 512)
@@ -33,5 +36,7 @@ public class NewsFile extends RegTimeEntity {
     private String newsFileSavedName;
     private String regUser;
 
+    @Enumerated(EnumType.STRING)
+    private ShowYn showYn;
 
 }

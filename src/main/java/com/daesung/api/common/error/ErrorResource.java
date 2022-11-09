@@ -1,4 +1,4 @@
-package com.daesung.api.common;
+package com.daesung.api.common.error;
 
 import com.daesung.api.events.Event;
 import com.daesung.api.index.IndexController;

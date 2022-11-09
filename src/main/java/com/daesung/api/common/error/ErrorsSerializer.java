@@ -1,4 +1,4 @@
-package com.daesung.api.common;
+package com.daesung.api.common.error;
 
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -13,7 +13,8 @@ import java.io.IOException;
 public class ErrorsSerializer extends JsonSerializer<Errors> {
     @Override
     public void serialize(Errors errors, JsonGenerator gen, SerializerProvider serializerProvider) throws IOException {
-        gen.writeFieldName("errors");
+//        gen.writeFieldName("errors");
+
         gen.writeStartArray();
         errors.getFieldErrors().stream().forEach(e -> {
             try {
