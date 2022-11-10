@@ -1,6 +1,7 @@
 package com.daesung.api.history.domain;
 
 import com.daesung.api.common.BaseTimeEntity;
+import com.daesung.api.utils.upload.UploadFile;
 import lombok.*;
 
 import javax.persistence.*;
@@ -21,7 +22,7 @@ public class History extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "hi_no")
+    @Column(name = "hi_id")
     private Long id;
     private String hiStartYear;
     private String hiEndYear;
@@ -40,10 +41,15 @@ public class History extends BaseTimeEntity {
     private String regUser;
     private String updUser;
 
+    public void changeContent(String content) {
+        this.content = content;
+    }
 
-
-
-
+    public void changeFileInfo(UploadFile uploadFile) {
+        this.hiOriginFileName = uploadFile.getOriginName();
+        this.hiSaveFileName = uploadFile.getNewName();
+        this.hiFileSavedPath = uploadFile.getRealPath();
+    }
 
 
 }

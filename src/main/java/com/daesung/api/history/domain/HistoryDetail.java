@@ -17,7 +17,7 @@ public class HistoryDetail {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "hd_no")
+    @Column(name = "hd_id")
     private Long id;
     private String hdYear;
     private String hdMonth;
@@ -28,6 +28,9 @@ public class HistoryDetail {
     private String regUser;
     private String updUser;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hi_id")
+    private History history;
 
 
 }

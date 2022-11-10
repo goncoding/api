@@ -36,7 +36,7 @@ public class ItemController {
 
         String savePath = "/news";
 
-        UploadFile uploadFile = fileStroe.storeFile(itemForm.getAttachFile(), savePath);
+//        UploadFile uploadFile = fileStroe.storeFile(itemForm.getAttachFile(), savePath);
 
 //        List<UploadFile02> uploadFileList = fileStroe.storeFiles(itemForm.getAttachFileList());
 //

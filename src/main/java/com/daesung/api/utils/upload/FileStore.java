@@ -23,18 +23,18 @@ public class FileStore {
     int size = 10;
 
     //다중 upload 처리
-    public List<UploadFile> storeFileList(List<MultipartFile> multipartFiles, String savePath) throws IOException {
+    public List<UploadFile> storeFileList(List<MultipartFile> multipartFiles, String savePath, String whiteList) throws IOException {
         List<UploadFile> storeFileResult = new ArrayList<>();
         for (MultipartFile multipartFile : multipartFiles) {
             if (!multipartFile.isEmpty()) {
-                storeFileResult.add(storeFile(multipartFile, savePath));
+                storeFileResult.add(storeFile(multipartFile, savePath, whiteList));
             }
         }
         return storeFileResult;
     }
 
     //단일 upload 처리
-    public UploadFile storeFile(MultipartFile multipartFile, String savePath) throws IOException {
+    public UploadFile storeFile(MultipartFile multipartFile, String savePath, String whiteList) throws IOException {
 
         int max = 10; //최대사이즈 : 10MB;
 
@@ -46,7 +46,7 @@ public class FileStore {
 
             String dir = fileDir + savePath + "/" + strToday;
 
-            String whiteList = "jpg, png, gif, hwp, pdf, ppt, pptx, xls, xlsx, zip, doc";
+//            String whiteList = "jpg, png, gif, hwp, pdf, ppt, pptx, xls, xlsx, zip, doc";
 
             String originalFilename = multipartFile.getOriginalFilename();
 

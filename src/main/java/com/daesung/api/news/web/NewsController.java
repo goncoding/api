@@ -15,23 +15,12 @@ import com.daesung.api.news.resource.NewsResource;
 import com.daesung.api.news.validation.NewsValidation;
 import com.daesung.api.news.web.dto.NewsDto;
 import com.daesung.api.news.web.dto.NewsGetResponseDto;
-import com.daesung.api.news.web.dto.NewsResponse;
-import com.daesung.api.utils.StrUtil;
 import com.daesung.api.utils.image.AccessLogUtil;
-import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.NasFileComponent;
 import com.daesung.api.utils.upload.UploadFile;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,7 +55,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/{lang}/news")
+@RequestMapping("/{lang}/news")
 
 public class NewsController {
 
@@ -75,6 +64,9 @@ public class NewsController {
 
 
     String savePath = "/news";
+    String whiteList = "hwp, pdf, pptx, ppt, xlsx, xls, xps, zip";
+
+    String thumbWhiteList = "jpg, gif, png";
 
     private final ModelMapper modelMapper;
     private final FileStore fileStore;
@@ -84,23 +76,10 @@ public class NewsController {
 
     private final NewsValidation newsValidation;
 
-    @ApiOperation(value = "news list 조회", notes = "뉴스/보도 검색 결과를 반환합니다.")
-    @ApiImplicitParams({
-        @ApiImplicitParam(name = "nbType", value = "뉴스(NE)/보도(RE) 구분"),
-        @ApiImplicitParam(name = "searchType", value = "뉴스/보도 검색 타입(tit, titCont"),
-        @ApiImplicitParam(name = "searchText", value = "뉴스/보도 검색 값"),
-        @ApiImplicitParam(name = "page", value = "조회할 페이지 번호"),
-        @ApiImplicitParam(name = "size", value = "한 페이지에 표시할 뉴스/보도 개수")
-    })
-    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "회원 조회 성공", content = @Content(schema = @Schema(implementation = UserResponse.class)))
-//            @ApiResponse(code = 400, message = "잘못된 요청"),
-//            @ApiResponse(code = 500, message = "서버에러")
 
-    })
     @GetMapping(produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
-    public ResponseEntity getNewsList(@ApiIgnore Pageable pageable,
-                                      @ApiIgnore PagedResourcesAssembler<News> assembler,
+    public ResponseEntity getNewsList(Pageable pageable,
+                                      PagedResourcesAssembler<News> assembler,
                                       @RequestParam(name = "searchType", required = false, defaultValue = "") String searchType,
                                       @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
                                       @RequestParam(name = "nbType", required = false, defaultValue = "") String nbType,
@@ -131,40 +110,15 @@ public class NewsController {
         return ResponseEntity.ok().body(pagedModel);
     }
 
-    @ApiOperation(value = "뉴스/보도 insert", notes = "뉴스/보도 insert")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "newsDto", value = "뉴스(NE)/보도(RE) 구분"),
-            @ApiImplicitParam(name = "lang", value = "언어", paramType = "path")
-    })
-    @Parameters({
-//            @Parameter(name = "thumbnailFile",description = "multipart/form-data 형식의 이미지 리스트를 input으로 받습니다. 이때 key 값은 multipartFile 입니다.",content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-    })
-//    @ApiResponses({
-//            @ApiResponse(code = 200, message = "성공"),
-//            @ApiResponse(code = 400, message = "잘못된 요청"),
-//            @ApiResponse(code = 500, message = "서버에러")
-//
-//    })
+
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity newsPost(
-            @Parameter(
-                    description = "multipart/form-data 형식의 썸네일을 input으로 받습니다. 이때 key 값은 thumbnailFile 입니다.",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
-            )
             @RequestPart(name = "newsDto") @Valid NewsDto newsDto,
-            @ApiIgnore Errors errors,
-            @Parameter(
-                    description = "multipart/form-data 형식의 썸네일을 input으로 받습니다. 이때 key 값은 thumbnailFile 입니다.",
-                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
-            )
+            Errors errors,
             @RequestPart(required = false) MultipartFile thumbnailFile,
-            @Parameter(
-                    description = "multipart/form-data 형식의 이미지 리스트를 input으로 받습니다. 이때 key 값은 newsFiles 입니다.",
-                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
-            )
             @RequestPart(required = false) List<MultipartFile> newsFiles,
-            @ApiIgnore Model model,
+            Model model,
             @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
@@ -195,7 +149,10 @@ public class NewsController {
             //뉴스 섬네일 업로드
             if (thumbnailFile != null) {
                 try {
-                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath);
+
+
+
+                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, whiteList);
 
                     NewsThumbnailFile newsThumbnailFile = NewsThumbnailFile.builder()
                             .news(savedNews)
@@ -214,7 +171,8 @@ public class NewsController {
             //뉴스파일 업로드
             if (newsFiles != null) {
                 try {
-                    List<UploadFile> uploadFiles = fileStore.storeFileList(newsFiles, savePath);
+
+                    List<UploadFile> uploadFiles = fileStore.storeFileList(newsFiles, savePath, thumbWhiteList);
 
                     for (UploadFile uploadFile : uploadFiles) {
 
@@ -265,22 +223,15 @@ public class NewsController {
     }
 
 
-
-
-    @ApiOperation(value = "뉴스/보도 단건 조회", notes = "뉴스/보도 단건 조회")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "뉴스 게시판 번호", paramType = "path", required = true),
-            @ApiImplicitParam(name = "lang", value = "언어", paramType = "path", required = true),
-    })
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity getNews(
             @PathVariable("id") Long id,
             @PathVariable(name = "lang", required = true) String lang,
-            @ApiIgnore @RequestParam(name = "searchType", required = false, defaultValue = "") String searchType,
-            @ApiIgnore @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
-            @ApiIgnore @RequestParam(name = "nbType", required = false, defaultValue = "") String nbType,
-            @ApiIgnore HttpServletRequest request,
-            @ApiIgnore HttpSession session,
+            @RequestParam(name = "searchType", required = false, defaultValue = "") String searchType,
+            @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
+            @RequestParam(name = "nbType", required = false, defaultValue = "") String nbType,
+             HttpServletRequest request,
+             HttpSession session,
             Model model
     ) throws Exception {
         AccessLogUtil.fileViewAccessLog(request);
@@ -321,7 +272,7 @@ public class NewsController {
     }
 
 
-    @ApiOperation(value = "뉴스/보도 단건 수정", notes = "뉴스/보도 단건 수정")
+
     @PutMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity newsPost(
             @PathVariable Long id,
@@ -361,7 +312,11 @@ public class NewsController {
             //뉴스 섬네일 업로드
             if (thumbnailFile != null) {
                 try {
-                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath);
+
+                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
+                    if (uploadFile.isWrongType()) {
+                        return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                    }
 
                     NewsThumbnailFile newsThumbnailFile = NewsThumbnailFile.builder()
                             .news(savedNews)
@@ -380,7 +335,13 @@ public class NewsController {
             //뉴스파일 업로드
             if (newsFiles != null) {
                 try {
-                    List<UploadFile> uploadFiles = fileStore.storeFileList(newsFiles, savePath);
+                    List<UploadFile> uploadFiles = fileStore.storeFileList(newsFiles, savePath, whiteList);
+
+                    for (UploadFile uploadFile : uploadFiles) {
+                        if (uploadFile.isWrongType()) {
+                            return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                        }
+                    }
 
                     //display N 처리
                     newsFileRepository.updateShowN(id);
@@ -434,7 +395,6 @@ public class NewsController {
     }
 
 
-    @ApiOperation(value = "뉴스/보도 단건 삭제", notes = "썸네일/이미지 모두 같이 삭제됩니다.")
     @DeleteMapping("/{id}")
     public ResponseEntity deleteNews(@PathVariable Long id){
         if (id == null) {
@@ -477,7 +437,6 @@ public class NewsController {
     }
 
 
-    @ApiOperation(value = "썸네일 이미지 출력", notes = "뉴스 게시판 번호 필수")
     @ResponseBody
     @GetMapping("/viewThumb/{newsSeq}")
     public ResponseEntity viewThumbnail(
@@ -503,7 +462,6 @@ public class NewsController {
     }
 
     //image 출력 파일 가져오기
-    @ApiOperation(value = "이미지 출력", notes = "이미지 파일 parent 폴더, 저장 파일명 필수")
     @GetMapping("/viewImage/{folderName}/{fileName}")
     public void viewEditorImages(
             HttpServletRequest request,
