@@ -1,5 +1,6 @@
 package com.daesung.api.history.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -10,7 +11,7 @@ import javax.persistence.*;
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(exclude = "history")
 @Builder
 @Table(name = "ds_history_detail")
 public class HistoryDetail {
@@ -24,13 +25,23 @@ public class HistoryDetail {
     @Column(columnDefinition = "TEXT")
     private String content;
     private Integer hdSequence;
-
+    private String language;
     private String regUser;
     private String updUser;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hi_id")
     private History history;
+
+    public void plusSequence() {
+        this.hdSequence++;
+    }
+
+    public void minusSequence() {
+        this.hdSequence--;
+    }
+
 
 
 }

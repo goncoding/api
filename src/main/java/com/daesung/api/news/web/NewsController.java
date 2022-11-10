@@ -84,8 +84,7 @@ public class NewsController {
                                       @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
                                       @RequestParam(name = "nbType", required = false, defaultValue = "") String nbType,
                                       @RequestParam(name = "page", required = false, defaultValue = "") String page,
-                                      @RequestParam(name = "size", required = false, defaultValue = "") String size
-    ) {
+                                      @RequestParam(name = "size", required = false, defaultValue = "") String size) {
         //타입 검색 값 넣기
         NewsSearchCondition searchCondition = new NewsSearchCondition();
 
@@ -110,7 +109,7 @@ public class NewsController {
         return ResponseEntity.ok().body(pagedModel);
     }
 
-
+    //뉴스 등록
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity newsPost(
@@ -149,9 +148,6 @@ public class NewsController {
             //뉴스 섬네일 업로드
             if (thumbnailFile != null) {
                 try {
-
-
-
                     UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, whiteList);
 
                     NewsThumbnailFile newsThumbnailFile = NewsThumbnailFile.builder()
@@ -428,10 +424,6 @@ public class NewsController {
         newsFileRepository.deleteByNewsId(id);
 
         newsRepository.deleteById(id);
-
-
-
-
 
         return ResponseEntity.ok(id+"번 삭제 성공");
     }

@@ -30,17 +30,11 @@ public class News extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private NbType nbType; //NE("뉴스"), RE("보도");
 
-
     private String title;
-
     private String content;
-
     private Long viewCnt;
-
     private String newCompany; //회사명
-
     private String link;
-
 
     @OneToMany(mappedBy = "news")
     private List<NewsFile> newsFiles;
@@ -50,7 +44,6 @@ public class News extends BaseTimeEntity {
 
     private String language;
     private String regUser;
-
 
     private String updUser;
 

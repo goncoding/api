@@ -63,4 +63,15 @@ class HistoryRepositoryTest extends BaseControllerTest {
 
     }
 
+    @DisplayName("")
+    @Test
+    public void _테스트02() throws Exception{
+
+        History history = historyRepository.searchHistoryBetween("1988");
+        System.out.println("history = " + history);
+
+    }
+
+
+
 }

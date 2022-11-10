@@ -11,7 +11,7 @@ import javax.validation.constraints.NotEmpty;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HistoryRequestDto {
+public class HistorytDto {
 
     @NotEmpty(message = "연혁 내용은 필수입니다.")
     private String content;

@@ -6,7 +6,12 @@ import com.daesung.api.history.domain.HistoryDetail;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
+import java.util.List;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -102,6 +107,40 @@ class HistoryDetailRepositoryTest extends BaseControllerTest {
 
         }
 
+
+
+    }
+
+    @DisplayName("")
+    @Test
+    public void _테스트_() throws Exception{
+
+//        List<HistoryDetail> sequenceEqYear = historyDetailRepository.findByHdSequenceEqYear("1987", "08", 2);
+
+
+//        System.out.println(" =================================================== ");
+//        for (HistoryDetail historyDetail : sequenceEqYear) {
+//            System.out.println("historyDetail = " + historyDetail);
+//        }
+
+//        Sort sort = Sort.by("hdYear").descending().and(Sort.by("hdMonth").descending()).and(Sort.by("hdSequence").descending());
+//        Pageable pageRequest = PageRequest.of(0, 10, sort);
+//
+//
+//        Page<HistoryDetail> all = historyDetailRepository.findAll(pageRequest);
+//        for (HistoryDetail historyDetail : all) {
+//            System.out.println("historyDetail = " + historyDetail);
+//        }
+
+//        List<HistoryDetail> byHistoryId = historyDetailRepository.findByHistoryId(2L);
+//        for (HistoryDetail historyDetail : byHistoryId) {
+//            System.out.println("historyDetail = " + historyDetail);
+//        }
+
+        List<HistoryDetail> byHdSequenceEqYearMinus = historyDetailRepository.findByHdSequenceEqYearMinus("1987", "08", 2);
+        for (HistoryDetail hdSequenceEqYearMinus : byHdSequenceEqYearMinus) {
+            System.out.println("hdSequenceEqYearMinus = " + hdSequenceEqYearMinus);
+        }
 
 
     }

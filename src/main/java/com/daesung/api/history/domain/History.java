@@ -38,6 +38,8 @@ public class History extends BaseTimeEntity {
     @Column(length = 1024)
     private String hiFileSavedPath;
 
+    private String language;
+
     private String regUser;
     private String updUser;
 
