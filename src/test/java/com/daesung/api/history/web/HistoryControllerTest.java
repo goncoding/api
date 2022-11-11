@@ -96,7 +96,6 @@ class HistoryControllerTest extends BaseControllerTest {
         mockMvc.perform(get("/{lang}/history/{id}","kr","2"))
                 .andDo(print())
                 .andExpect(status().isOk());
-
     }
 
     @DisplayName("연혁세부 list 조회 - 성공")

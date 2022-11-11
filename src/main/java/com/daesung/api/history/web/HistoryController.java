@@ -6,6 +6,7 @@ import com.daesung.api.history.domain.HistoryDetail;
 import com.daesung.api.history.repository.HistoryDetailRepository;
 import com.daesung.api.history.repository.HistoryRepository;
 import com.daesung.api.history.resource.HistoryDetailResource;
+import com.daesung.api.history.resource.HistoryListResource;
 import com.daesung.api.history.resource.HistoryResource;
 import com.daesung.api.history.web.dto.HistoryDetailDto;
 import com.daesung.api.history.web.dto.HistorytDto;
@@ -35,6 +36,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.daesung.api.utils.upload.UploadUtil.CHARSET_UTF8;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequiredArgsConstructor
@@ -60,7 +63,7 @@ public class HistoryController {
                                          @RequestParam(name = "size", required = false, defaultValue = "") String size) {
 
         Page<History> historyPage = historyRepository.findAll(pageable);
-        PagedModel<HistoryResource> pagedModel = assembler.toModel(historyPage, h -> new HistoryResource(h));
+        PagedModel<HistoryListResource> pagedModel = assembler.toModel(historyPage, h -> new HistoryListResource(h));
         return ResponseEntity.ok().body(pagedModel);
     }
 
@@ -75,7 +78,7 @@ public class HistoryController {
         }
         History history = optionalHistory.get();
 
-        return ResponseEntity.ok(history);
+        return ResponseEntity.ok(new HistoryResource(history));
     }
 
 
