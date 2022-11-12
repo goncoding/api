@@ -1,5 +1,6 @@
 package com.daesung.api.history.domain;
 
+import com.daesung.api.history.web.dto.HistoryDetailDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -42,6 +43,13 @@ public class HistoryDetail {
         this.hdSequence--;
     }
 
+    public void updateDetail(HistoryDetailDto dto) {
+
+        this.hdYear = dto.getHdYear();
+        this.hdMonth = dto.getHdMonth();
+        this.content = dto.getContent();
+        this.hdSequence = dto.getHdSequence();
+    }
 
 
 }

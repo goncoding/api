@@ -1,12 +1,11 @@
 package com.daesung.api.history.domain;
 
+import com.daesung.api.accounts.domain.Account;
 import com.daesung.api.common.BaseTimeEntity;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -42,6 +41,10 @@ public class History extends BaseTimeEntity {
 
     private String regUser;
     private String updUser;
+
+    @ManyToOne
+    @JoinColumn(name = "ac_id")
+    private Account adminUser;
 
     public void changeContent(String content) {
         this.content = content;

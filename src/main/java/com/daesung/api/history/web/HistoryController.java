@@ -25,6 +25,8 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +37,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import static com.daesung.api.utils.upload.UploadUtil.CHARSET_UTF8;
+import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
@@ -170,6 +172,47 @@ public class HistoryController {
         return ResponseEntity.ok(new HistoryDetailResource(savedDetail));
     }
 
+    //연혁 세부 upadte
+    @PutMapping(value = "/detail/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity historyDetailUpdate(@RequestBody @Valid HistoryDetailDto detailDto,
+                                              Errors errors,
+                                              @PathVariable(name = "id") Long id,
+                                              @PathVariable(name = "lang", required = true) String lang) {
+
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+        if (!optionalHistoryDetail.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+        }
+
+        HistoryDetail getDetail = optionalHistoryDetail.get();
+
+        if (getDetail.getHdYear().equals(detailDto.getHdYear()) && getDetail.getHdMonth().equals(detailDto.getHdMonth())) {
+            if (detailDto.getHdSequence() > getDetail.getHdSequence()) {
+                List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceLtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
+                for (HistoryDetail historyDetail : sequenceLtInputSeq) {
+                    historyDetail.minusSequence();
+                }
+            }
+
+        if (detailDto.getHdSequence() < getDetail.getHdSequence()) {
+            List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceGtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
+            for (HistoryDetail historyDetail : sequenceLtInputSeq) {
+                historyDetail.plusSequence();
+            }
+        }
+        }
+
+        HistoryDetail updatedDetail = historyDetailRepository.save(getDetail);
+
+        return ResponseEntity.ok(new HistoryDetailResource(updatedDetail));
+    }
+
+
+
     @GetMapping(value = "/management/{hitoryId}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyManagementGet(@PathVariable(name = "hitoryId", required = false) Long hitoryId,
                                                @PathVariable(name = "lang", required = true) String lang) {
@@ -189,6 +232,10 @@ public class HistoryController {
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
         }
         HistoryDetail historyDetail = optionalHistoryDetail.get();
+
+        HistoryDetailResource historyDetailResource = new HistoryDetailResource(historyDetail);
+        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
+        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
 
         return ResponseEntity.ok(new HistoryDetailResource(historyDetail));
     }

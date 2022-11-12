@@ -13,6 +13,5 @@ public class HistoryDetailResource extends EntityModel<HistoryDetail> {
 
     public HistoryDetailResource(HistoryDetail detail, Link... links) {
         super(detail, links);
-        add(linkTo(methodOn(HistoryController.class).historyDetailGet(detail.getId(),detail.getLanguage())).withSelfRel());
     }
 }

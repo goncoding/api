@@ -50,7 +50,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
-import static com.daesung.api.utils.upload.UploadUtil.CHARSET_UTF8;
+import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController

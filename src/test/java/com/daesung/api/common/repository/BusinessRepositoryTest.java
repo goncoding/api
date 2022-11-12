@@ -17,6 +17,20 @@ class BusinessRepositoryTest extends BaseControllerTest {
     @Autowired
     BusinessRepository businessRepository;
 
+    @DisplayName("")
+    @Test
+    public void _테스트2() throws Exception{
+
+        Business business01 = Business.builder()
+                .businessName("GREEN ENERGY")
+                .businessInfo("GREEN ENERGY INFO")
+                .build();
+
+        businessRepository.save(business01);
+
+
+    }
+
     @DisplayName("dummy data")
     @Test
     @Commit

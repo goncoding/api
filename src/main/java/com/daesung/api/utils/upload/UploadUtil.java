@@ -12,7 +12,7 @@ public class UploadUtil {
 	public static final int DOCUMENT = 2;
 	public static final int VIDEO = 3;
 	public static final int ALL = 9;
-	public static final String CHARSET_UTF8 = ";charset=utf-8";
+	
 
 	/**
 	 * Return extension from file name

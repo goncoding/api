@@ -1,5 +1,9 @@
 package com.daesung.api.history.web;
 
+import com.daesung.api.accounts.domain.Account;
+import com.daesung.api.accounts.domain.enumType.AccountRole;
+import com.daesung.api.accounts.properties.AdminProperties;
+import com.daesung.api.accounts.service.AccountService;
 import com.daesung.api.common.BaseControllerTest;
 import com.daesung.api.events.EventDto;
 import com.daesung.api.history.domain.History;
@@ -7,15 +11,22 @@ import com.daesung.api.history.domain.HistoryDetail;
 import com.daesung.api.history.repository.HistoryRepository;
 import com.daesung.api.history.web.dto.HistoryDetailDto;
 import com.daesung.api.history.web.dto.HistorytDto;
+import com.google.common.net.HttpHeaders;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.oauth2.common.util.Jackson2JsonParser;
+import org.springframework.test.web.servlet.ResultActions;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -25,6 +36,12 @@ class HistoryControllerTest extends BaseControllerTest {
 
     @Autowired
     HistoryRepository historyRepository;
+
+    @Autowired
+    AccountService accountService;
+
+    @Autowired
+    AdminProperties adminProperties;
 
     @DisplayName("update 수정 - 성공")
     @Test
@@ -43,8 +60,9 @@ class HistoryControllerTest extends BaseControllerTest {
         MockMultipartFile multipartFile1 = new MockMultipartFile("thumbnailFile", "test01.jpg", "image/jpeg", "test file".getBytes(StandardCharsets.UTF_8) );
 
         mockMvc.perform(multipart("/{lang}/history/modify/{id}","kr", history.getId())
-                .file(multipartFile)
-                .file(multipartFile1)
+                        .file(multipartFile)
+                        .file(multipartFile1)
+                        .header(HttpHeaders.AUTHORIZATION, getBearerToken())
 
         )
                 .andDo(print())
@@ -69,8 +87,9 @@ class HistoryControllerTest extends BaseControllerTest {
         MockMultipartFile multipartFile1 = new MockMultipartFile("thumbnailFile", "test01.txt", "text/html", "test file".getBytes(StandardCharsets.UTF_8) );
 
         mockMvc.perform(multipart("/{lang}/history/modify/{id}","kr", history.getId())
-                .file(multipartFile)
-                .file(multipartFile1)
+                        .file(multipartFile)
+                        .file(multipartFile1)
+                        .header(HttpHeaders.AUTHORIZATION, getBearerToken())
 
         )
                 .andDo(print())
@@ -108,7 +127,7 @@ class HistoryControllerTest extends BaseControllerTest {
     }
 
 
-    @DisplayName("연혁세부 단건 조회 - 성공")
+    @DisplayName("연혁세부 단건 조회(인증없음) - 성공")
     @Test
     public void _테스트_detail_get() throws Exception{
 
@@ -117,31 +136,46 @@ class HistoryControllerTest extends BaseControllerTest {
                 .andExpect(status().isOk());
     }
 
-    @DisplayName("연혁세부 단건 삭제 - 성공")
+    @DisplayName("연혁세부 단건 조회(인증 있는 경우) - 성공")
     @Test
-    public void _테스트_detail_detail() throws Exception{
+    public void _테스트_detail_get_authentication() throws Exception{
 
-        mockMvc.perform(delete("/kr/history/detail/26"))
+        mockMvc.perform(get("/kr/history/detail/1")
+                        .header(HttpHeaders.AUTHORIZATION, getBearerToken())
+                )
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+//                .andExpect()
+        ;
     }
 
-    @DisplayName("연셕세부 등록/수정 - 성공")
+
+//    @DisplayName("연혁세부 단건 삭제 - 성공")
+//    @Test
+//    public void _테스트_detail_detail() throws Exception{
+//
+//        mockMvc.perform(delete("/kr/history/detail/26")
+//                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+getAccessToken())
+//                )
+//                .andDo(print())
+//                .andExpect(status().isOk());
+//    }
+
+    @DisplayName("연셕세부 수정 - 성공")
     @Test
     public void _테스트_detail_insert() throws Exception{
-
-        History history = historyRepository.findById(5L).get();
 
         HistoryDetailDto historyDetail = HistoryDetailDto.builder()
                 .hdYear("1987")
                 .hdMonth("08")
-                .content("33333333333")
-                .hdSequence(1)
+                .content("update2222222")
+                .hdSequence(6)
                 .build();
 
-        mockMvc.perform(post("/kr/history/detail")
+        mockMvc.perform(put("/kr/history/detail/38")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(historyDetail))
+                        .header(HttpHeaders.AUTHORIZATION, getBearerToken())
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -149,7 +183,8 @@ class HistoryControllerTest extends BaseControllerTest {
 
     }
 
-   @DisplayName("연셕세부 노출순서 변경 - 성공")
+
+    @DisplayName("연셕세부 노출순서 변경 - 성공")
     @Test
     public void _테스트_detail_sequence_ok() throws Exception{
 
@@ -165,6 +200,7 @@ class HistoryControllerTest extends BaseControllerTest {
         mockMvc.perform(post("/kr/history/detail")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(historyDetail))
+                        .header(HttpHeaders.AUTHORIZATION, getBearerToken())
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -172,20 +208,47 @@ class HistoryControllerTest extends BaseControllerTest {
 
     }
 
-//    @DisplayName("")
-//    @Test
-//    public void _테스트() throws Exception{
+
+    private String getBearerToken() throws Exception {
+        return "Bearer " + getAccessToken();
+    }
+
+    private String getAccessToken() throws Exception {
+
+        Set<AccountRole> roles = new HashSet<>();
+        roles.add(AccountRole.DS_POWER);
+        roles.add(AccountRole.DS_ENERGY);
+
+        String loginId = "gon1";
+        String loginPwd = "gon";
 //
-////        mockMvc.perform(get("/kr/history/detail"))
-////                .andDo(print())
+//        Account gon = Account.builder()
+//                .loginId(loginId)
+//                .loginPwd(loginPwd)
+//                .roles(roles)
+//                .build();
 //
-//
-//    }
+//        accountService.saveAccount(gon);
+
+        String clientId = "daesung";
+        String clientSecret = "pass";
+
+        ResultActions perform = mockMvc.perform(post("/oauth/token")
+                        .with(httpBasic(adminProperties.getClientId(), adminProperties.getClientSecret()))
+                        .param("username", adminProperties.getAdminUsername())
+                        .param("password", adminProperties.getAdminPassword())
+                        .param("grant_type", "password")
+                )
+//                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("access_token").exists());
 
 
+        String responseBody = perform.andReturn().getResponse().getContentAsString();
+        Jackson2JsonParser parser = new Jackson2JsonParser();
+        String access_token = parser.parseMap(responseBody).get("access_token").toString();
+        System.out.println("access_token = " + access_token);
+        return access_token;
 
-
-
-
-
+    }
 }

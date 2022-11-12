@@ -137,9 +137,19 @@ class HistoryDetailRepositoryTest extends BaseControllerTest {
 //            System.out.println("historyDetail = " + historyDetail);
 //        }
 
-        List<HistoryDetail> byHdSequenceEqYearMinus = historyDetailRepository.findByHdSequenceEqYearMinus("1987", "08", 2);
-        for (HistoryDetail hdSequenceEqYearMinus : byHdSequenceEqYearMinus) {
-            System.out.println("hdSequenceEqYearMinus = " + hdSequenceEqYearMinus);
+//        List<HistoryDetail> byHdSequenceEqYearMinus = historyDetailRepository.findByHdSequenceEqYearMinus("1987", "08", 2);
+//        for (HistoryDetail hdSequenceEqYearMinus : byHdSequenceEqYearMinus) {
+//            System.out.println("hdSequenceEqYearMinus = " + hdSequenceEqYearMinus);
+//        }
+
+//        List<HistoryDetail> byHdSequenceGtInputSeq = historyDetailRepository.findByHdSequenceGtInputSeq("1987", "08", 7, 5);
+//        for (HistoryDetail historyDetail : byHdSequenceGtInputSeq) {
+//            System.out.println("historyDetail = " + historyDetail);
+//        }
+
+        List<HistoryDetail> byHdSequenceGtInputSeq = historyDetailRepository.findByHdSequenceLtInputSeq("1987", "08", 4, 7);
+        for (HistoryDetail historyDetail : byHdSequenceGtInputSeq) {
+            System.out.println("historyDetail = " + historyDetail);
         }
 
 
