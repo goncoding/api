@@ -168,7 +168,7 @@ class HistoryControllerTest extends BaseControllerTest {
         HistoryDetailDto historyDetail = HistoryDetailDto.builder()
                 .hdYear("1987")
                 .hdMonth("08")
-                .content("update2222222")
+                .content("update...")
                 .hdSequence(6)
                 .build();
 

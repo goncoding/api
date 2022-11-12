@@ -195,6 +195,7 @@ public class HistoryController {
                 List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceLtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
                 for (HistoryDetail historyDetail : sequenceLtInputSeq) {
                     historyDetail.minusSequence();
+
                 }
             }
 
@@ -203,8 +204,11 @@ public class HistoryController {
             for (HistoryDetail historyDetail : sequenceLtInputSeq) {
                 historyDetail.plusSequence();
             }
+         }
+
         }
-        }
+
+        getDetail.setHdSequence(detailDto.getHdSequence());
 
         HistoryDetail updatedDetail = historyDetailRepository.save(getDetail);
 
