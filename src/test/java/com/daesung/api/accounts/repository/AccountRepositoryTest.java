@@ -2,15 +2,11 @@ package com.daesung.api.accounts.repository;
 
 import com.daesung.api.accounts.domain.Account;
 import com.daesung.api.common.BaseControllerTest;
-import com.daesung.api.common.BaseTimeEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class AccountRepositoryTest extends BaseControllerTest {
 

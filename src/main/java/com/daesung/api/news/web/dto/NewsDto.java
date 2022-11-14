@@ -23,9 +23,8 @@ public class NewsDto {
     private String newCompany;
     private String link;
     private Long viewCnt;
-
     private String language;
-
+    private String thumbSummary;
 
 
 }

@@ -19,8 +19,6 @@ import com.daesung.api.utils.image.AccessLogUtil;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.NasFileComponent;
 import com.daesung.api.utils.upload.UploadFile;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +35,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -92,7 +89,7 @@ public class NewsController {
             searchCondition.setSearchTitle(searchText);
         }
         if ("titCont".equals(searchText)) {
-            searchCondition.setSearchTitle(searchText);
+            searchCondition.setSearchText(searchText);
         }
         if ("NE".equals(nbType)) {
             searchCondition.setNbType(NbType.NE);
@@ -148,13 +145,18 @@ public class NewsController {
             //뉴스 섬네일 업로드
             if (thumbnailFile != null) {
                 try {
-                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, whiteList);
+                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
+
+                    if (uploadFile.isWrongType()) {
+                        return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                    }
 
                     NewsThumbnailFile newsThumbnailFile = NewsThumbnailFile.builder()
                             .news(savedNews)
                             .thumbnailFileOriginalName(uploadFile.getOriginName())
                             .thumbnailFileSavedName(uploadFile.getNewName())
                             .thumbnailFileSavedPath(uploadFile.getRealPath())
+                            .thumbnailFileSummary(newsDto.getThumbSummary())
                             .build();
 
                     newsThumbnailFileRepository.save(newsThumbnailFile);
@@ -168,9 +170,12 @@ public class NewsController {
             if (newsFiles != null) {
                 try {
 
-                    List<UploadFile> uploadFiles = fileStore.storeFileList(newsFiles, savePath, thumbWhiteList);
+                    List<UploadFile> uploadFiles = fileStore.storeFileList(newsFiles, savePath, whiteList);
 
                     for (UploadFile uploadFile : uploadFiles) {
+                        if (uploadFile.isWrongType()) {
+                            return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                        }
 
                         NewsFile newsFile = NewsFile.builder()
                                 .news(savedNews)

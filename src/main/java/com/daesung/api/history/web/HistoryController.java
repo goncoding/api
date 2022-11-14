@@ -190,23 +190,25 @@ public class HistoryController {
 
         HistoryDetail getDetail = optionalHistoryDetail.get();
 
-        if (getDetail.getHdYear().equals(detailDto.getHdYear()) && getDetail.getHdMonth().equals(detailDto.getHdMonth())) {
-            if (detailDto.getHdSequence() > getDetail.getHdSequence()) {
-                List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceLtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
-                for (HistoryDetail historyDetail : sequenceLtInputSeq) {
-                    historyDetail.minusSequence();
+        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence());
+        if (detailSequenceCheck != null) {
+            if (getDetail.getHdYear().equals(detailDto.getHdYear()) && getDetail.getHdMonth().equals(detailDto.getHdMonth())) {
+                if (detailDto.getHdSequence() > getDetail.getHdSequence()) {
+                    List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceLtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
+                    for (HistoryDetail historyDetail : sequenceLtInputSeq) {
+                        historyDetail.minusSequence();
+                    }
+                }
 
+                if (detailDto.getHdSequence() < getDetail.getHdSequence()) {
+                    List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceGtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
+                    for (HistoryDetail historyDetail : sequenceLtInputSeq) {
+                        historyDetail.plusSequence();
+                    }
                 }
             }
-
-        if (detailDto.getHdSequence() < getDetail.getHdSequence()) {
-            List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceGtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
-            for (HistoryDetail historyDetail : sequenceLtInputSeq) {
-                historyDetail.plusSequence();
-            }
-         }
-
         }
+
 
         getDetail.setHdSequence(detailDto.getHdSequence());
 

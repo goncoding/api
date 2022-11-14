@@ -1,7 +1,7 @@
 package com.daesung.api.history.domain;
 
 import com.daesung.api.accounts.domain.Account;
-import com.daesung.api.common.BaseTimeEntity;
+import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.*;
 

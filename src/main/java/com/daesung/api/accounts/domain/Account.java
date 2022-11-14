@@ -2,7 +2,7 @@ package com.daesung.api.accounts.domain;
 
 
 import com.daesung.api.accounts.domain.enumType.AccountRole;
-import com.daesung.api.common.BaseTimeEntity;
+import com.daesung.api.utils.date.BaseTimeEntity;
 import lombok.*;
 
 import javax.persistence.*;

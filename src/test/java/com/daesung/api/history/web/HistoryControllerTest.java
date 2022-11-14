@@ -12,6 +12,7 @@ import com.daesung.api.history.repository.HistoryRepository;
 import com.daesung.api.history.web.dto.HistoryDetailDto;
 import com.daesung.api.history.web.dto.HistorytDto;
 import com.google.common.net.HttpHeaders;
+import org.h2.util.ThreadDeadlockDetector;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,11 +169,11 @@ class HistoryControllerTest extends BaseControllerTest {
         HistoryDetailDto historyDetail = HistoryDetailDto.builder()
                 .hdYear("1987")
                 .hdMonth("08")
-                .content("update...")
-                .hdSequence(6)
+                .content("aaaaaaaaaaaaaaaaaaaaaaaa")
+                .hdSequence(12)
                 .build();
 
-        mockMvc.perform(put("/kr/history/detail/38")
+        mockMvc.perform(post("/kr/history/detail")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(historyDetail))
                         .header(HttpHeaders.AUTHORIZATION, getBearerToken())
@@ -180,7 +181,26 @@ class HistoryControllerTest extends BaseControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 ;
+    }
+    @DisplayName("연셕세부 수정 - 성공")
+    @Test
+    public void _테스트_detail_update() throws Exception{
 
+        HistoryDetailDto historyDetail = HistoryDetailDto.builder()
+                .hdYear("1987")
+                .hdMonth("08")
+                .content("gggggggupdate...")
+                .hdSequence(5)
+                .build();
+
+        mockMvc.perform(put("/kr/history/detail/34")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(historyDetail))
+                        .header(HttpHeaders.AUTHORIZATION, getBearerToken())
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                ;
     }
 
 
@@ -251,4 +271,5 @@ class HistoryControllerTest extends BaseControllerTest {
         return access_token;
 
     }
+
 }

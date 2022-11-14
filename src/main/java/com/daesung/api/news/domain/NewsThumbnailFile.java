@@ -1,6 +1,6 @@
 package com.daesung.api.news.domain;
 
-import com.daesung.api.common.RegTimeEntity;
+import com.daesung.api.utils.date.RegTimeEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -33,6 +33,8 @@ public class NewsThumbnailFile extends RegTimeEntity {
     private String thumbnailFileSavedPath;
     @Column(length = 512)
     private String thumbnailFileSavedName;
+    @Column(length = 1024)
+    private String thumbnailFileSummary;
     private String regUser;
 
 

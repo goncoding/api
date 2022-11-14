@@ -1,4 +1,4 @@
-package com.daesung.api.common;
+package com.daesung.api.utils.date;
 
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;

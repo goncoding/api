@@ -10,7 +10,7 @@ public class UploadFile {
 	String newName;
 	String realPath;
 	String uriPath;
-
+	String summary;
 
 	public UploadFile setFileNameEmpty(boolean bool) {
 		fileNameEmpty = bool;
@@ -79,5 +79,13 @@ public class UploadFile {
 	public UploadFile setUriPath(String uriPath) {
 		this.uriPath = uriPath;
 		return this;
+	}
+
+	public String getSummary() {
+		return summary;
+	}
+
+	public void setSummary(String summary) {
+		this.summary = summary;
 	}
 }

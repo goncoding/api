@@ -1,6 +1,6 @@
 package com.daesung.api.news.domain;
 
-import com.daesung.api.common.RegTimeEntity;
+import com.daesung.api.utils.date.RegTimeEntity;
 import com.daesung.api.news.domain.enumType.ShowYn;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;

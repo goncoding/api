@@ -1,6 +1,6 @@
 package com.daesung.api.common.domain;
 
-import com.daesung.api.common.BaseTimeEntity;
+import com.daesung.api.utils.date.BaseTimeEntity;
 import lombok.*;
 
 import javax.persistence.*;
@@ -18,12 +18,13 @@ public class BusinessField extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "bus_field_no")
+    @Column(name = "bus_field_id")
     private Long id;
     private String busFieldName;
     private String busFieldInfo;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "business_id")
     private Business business;
 
     @Column(length = 1024)

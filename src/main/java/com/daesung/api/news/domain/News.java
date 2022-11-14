@@ -1,11 +1,9 @@
 package com.daesung.api.news.domain;
 
-import com.daesung.api.common.BaseTimeEntity;
+import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.news.domain.enumType.NbType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.util.List;
@@ -36,9 +34,11 @@ public class News extends BaseTimeEntity {
     private String newCompany; //회사명
     private String link;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "news")
     private List<NewsFile> newsFiles;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "news")
     private List<NewsThumbnailFile> newsThumbnailFiles;
 
