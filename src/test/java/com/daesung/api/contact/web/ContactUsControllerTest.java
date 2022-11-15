@@ -34,8 +34,10 @@ class ContactUsControllerTest extends BaseControllerTest {
         mockMvc.perform(get("/kr/contact")
                         .param("page","0")
                         .param("size","10")
-                        .param("searchType","mnName")
-                        .param("searchText","직원02")
+//                        .param("searchType","mnName")
+//                        .param("searchText","직원02")
+                                .param("searchType","busFieldName")
+                                .param("searchText","DS파워")
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -49,6 +51,8 @@ class ContactUsControllerTest extends BaseControllerTest {
 
         Random random = new Random();
         for (int i = 3; i < 100; i++) {
+
+
 
             String value = String.valueOf(random.nextInt((3 - 1) + 1) + 1);
 

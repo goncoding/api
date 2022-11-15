@@ -57,7 +57,9 @@ public class HistoryController {
     private final HistoryRepository historyRepository;
     private final HistoryDetailRepository historyDetailRepository;
 
-    //연혁 리스트
+    /**
+     * 연혁 리스트 조회
+     */
     @GetMapping(produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity getHistoryListGet(Pageable pageable,
                                          PagedResourcesAssembler<History> assembler,
@@ -69,7 +71,9 @@ public class HistoryController {
         return ResponseEntity.ok().body(pagedModel);
     }
 
-    //연혁 불러오기
+    /**
+     * 연혁 단건 조회
+     */
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity historyGet(@PathVariable(name = "id", required = false) Long id,
                                            @PathVariable(name = "lang", required = true) String lang){
@@ -83,8 +87,9 @@ public class HistoryController {
         return ResponseEntity.ok(new HistoryResource(history));
     }
 
-
-    //연혁 수정
+    /**
+     * 연혁 단건 수정
+     */
     @PostMapping(value = "/modify/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity historyUpdate(
             @PathVariable Long id,
@@ -124,7 +129,9 @@ public class HistoryController {
         return ResponseEntity.ok(updatedHistory);
     }
 
-
+    /**
+     * 연혁 상세 리스트 조회
+     */
     @GetMapping(value = "/detail", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyDetailGetList(Pageable pageable,
                                                PagedResourcesAssembler<HistoryDetail> assembler) {
@@ -139,7 +146,29 @@ public class HistoryController {
         return ResponseEntity.ok().body(pagedModel);
     }
 
-    //연혁 상세 등록
+    /**
+     * 연혁상세 단건 조회
+     */
+    @GetMapping(value = "/detail/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
+    public ResponseEntity historyDetailGet(@PathVariable(name = "id", required = false) Long id,
+                                           @PathVariable(name = "lang", required = true) String lang){
+
+        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+        if (!optionalHistoryDetail.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+        }
+        HistoryDetail historyDetail = optionalHistoryDetail.get();
+
+        HistoryDetailResource historyDetailResource = new HistoryDetailResource(historyDetail);
+        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
+        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
+
+        return ResponseEntity.ok(new HistoryDetailResource(historyDetail));
+    }
+
+    /**
+     * 연혁 상세 등록
+     */
     @PostMapping(value = "/detail", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyDetailInsert(@RequestBody @Valid HistoryDetailDto detailDto,
                                               Errors errors,
@@ -172,7 +201,9 @@ public class HistoryController {
         return ResponseEntity.ok(new HistoryDetailResource(savedDetail));
     }
 
-    //연혁 세부 upadte
+    /**
+     * 연혁상세 단건 수정
+     */
     @PutMapping(value = "/detail/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyDetailUpdate(@RequestBody @Valid HistoryDetailDto detailDto,
                                               Errors errors,
@@ -218,37 +249,12 @@ public class HistoryController {
     }
 
 
-
-    @GetMapping(value = "/management/{hitoryId}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
-    public ResponseEntity historyManagementGet(@PathVariable(name = "hitoryId", required = false) Long hitoryId,
-                                               @PathVariable(name = "lang", required = true) String lang) {
-
-        List<HistoryDetail> detailList = historyDetailRepository.findByHistoryId(hitoryId);
-        return ResponseEntity.ok().body(detailList);
-    }
-
-
-    //연혁 상세 불러오기
-    @GetMapping(value = "/detail/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
-    public ResponseEntity historyDetailGet(@PathVariable(name = "id", required = false) Long id,
-                                            @PathVariable(name = "lang", required = true) String lang){
-
-        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
-        if (!optionalHistoryDetail.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
-        }
-        HistoryDetail historyDetail = optionalHistoryDetail.get();
-
-        HistoryDetailResource historyDetailResource = new HistoryDetailResource(historyDetail);
-        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
-        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
-
-        return ResponseEntity.ok(new HistoryDetailResource(historyDetail));
-    }
-
+    /**
+     * 연혁상세 단건 삭제
+     */
     @DeleteMapping(value = "/detail/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity historyDetailDelete(@PathVariable(name = "id", required = false) Long id,
-                                           @PathVariable(name = "lang", required = true) String lang){
+                                              @PathVariable(name = "lang", required = true) String lang){
 
         Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
         if (!optionalHistoryDetail.isPresent()) {
@@ -266,6 +272,19 @@ public class HistoryController {
 
         return ResponseEntity.ok(id+"번 연혁 상세정보 삭제 성공");
     }
+
+    /**
+     * @param hitoryId 연혁 ID
+     * @return 연혁ID에 따른 연혁 세부 조회
+     */
+    @GetMapping(value = "/management/{hitoryId}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity historyManagementGet(@PathVariable(name = "hitoryId", required = false) Long hitoryId,
+                                               @PathVariable(name = "lang", required = true) String lang) {
+
+        List<HistoryDetail> detailList = historyDetailRepository.findByHistoryId(hitoryId);
+        return ResponseEntity.ok().body(detailList);
+    }
+
 
 
 }

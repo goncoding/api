@@ -30,8 +30,8 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
                 .authorizeRequests()
                     .mvcMatchers(HttpMethod.GET, "/kr/**").permitAll()
                     .mvcMatchers("/kr/account").permitAll()
-//                    .anyRequest().authenticated()
-                    .anyRequest().permitAll()
+                    .anyRequest().authenticated()
+//                    .anyRequest().permitAll()
                     .and()
                 .exceptionHandling()
                 .accessDeniedHandler(new OAuth2AccessDeniedHandler());

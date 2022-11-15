@@ -30,5 +30,7 @@ public class ContactUsDto {
     private String cuAnswer;
     private String mnNum;
     private String cuMemo;
+    private String busFieldName;
+
 
 }
