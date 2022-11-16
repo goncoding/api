@@ -1,6 +1,7 @@
 package com.daesung.api.utils.search;
 
 
+import com.daesung.api.history.domain.enumType.HrCategory;
 import com.daesung.api.utils.StrUtil;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,12 @@ public class Search {
 
     Integer size;
     Integer page;
+
+    private String searchTitle;
+
+    //연혁 히스테리 기록 //        NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
+    private HrCategory hrCategory;
+
 
     public String getParams() {
         final String[] params = {searchType, searchText, nbType};

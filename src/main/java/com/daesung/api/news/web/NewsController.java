@@ -110,11 +110,9 @@ public class NewsController {
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity newsPost(
-            @RequestPart(name = "newsDto") @Valid NewsDto newsDto,
-            Errors errors,
+            @RequestPart(name = "newsDto") @Valid NewsDto newsDto, Errors errors,
             @RequestPart(required = false) MultipartFile thumbnailFile,
             @RequestPart(required = false) List<MultipartFile> newsFiles,
-            Model model,
             @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
@@ -223,7 +221,9 @@ public class NewsController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("뉴스, 보도 타입을 확인해 주세요."));
     }
 
-
+    /**
+     * news 단건 조회
+     */
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity getNews(
             @PathVariable("id") Long id,
@@ -232,10 +232,10 @@ public class NewsController {
             @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
             @RequestParam(name = "nbType", required = false, defaultValue = "") String nbType,
              HttpServletRequest request,
-             HttpSession session,
-            Model model
-    ) throws Exception {
+             HttpSession session) throws Exception {
+
         AccessLogUtil.fileViewAccessLog(request);
+
         String newsLang = "en";
         if(lang.equals("kr")) newsLang = "kr";
 
@@ -245,7 +245,7 @@ public class NewsController {
         } else {
             Optional<News> optionalNews = newsRepository.findById(id);
             if (!optionalNews.isPresent()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요."));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.","404"));
             }
             news = optionalNews.get();
         }
@@ -459,6 +459,7 @@ public class NewsController {
     }
 
     //image 출력 파일 가져오기
+    //todo foldername, filename이 인자로 들어오지 않고 바로 id값으로 이미지 출력할 수 있도록 수정 필요
     @GetMapping("/viewImage/{folderName}/{fileName}")
     public void viewEditorImages(
             HttpServletRequest request,

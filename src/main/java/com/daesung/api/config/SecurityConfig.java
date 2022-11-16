@@ -61,7 +61,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .and()
                 .authorizeRequests()
 //                    .mvcMatchers(HttpMethod.GET, "/kr/**").authenticated()
-                    .mvcMatchers(HttpMethod.GET, "/kr/**").permitAll()
+                .mvcMatchers(HttpMethod.GET, "/api/**").permitAll()
+                .mvcMatchers(HttpMethod.GET, "/kr/**").permitAll()
                     .anyRequest().authenticated();
 
     }

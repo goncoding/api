@@ -128,7 +128,7 @@ public class StrUtil {
 	 * @return String
 	 */
 	public static final String encodeKR(String src) {
-		Pattern p = Pattern.compile("[ㄱ-힣]");                                    // 정규식을 사용하여, 한글로 된 문자만을 대상으로
+		Pattern p = Pattern.compile("[ㄱ-힣]"); // 정규식을 사용하여, 한글로 된 문자만을 대상으로
 		Matcher m = p.matcher(src);
 		StringBuffer sb = new StringBuffer();
 		while (m.find()) {

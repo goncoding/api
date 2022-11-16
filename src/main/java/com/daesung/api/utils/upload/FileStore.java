@@ -77,7 +77,7 @@ public class FileStore {
             multipartFile.transferTo(upFile);
             return up.setNewName(newFileName)
                     .setOriginName(originName)
-                    .setRealPath(String.format("%s/%s", dir, newFileName));
+                    .setRealPath(String.format("%s", dir));
 
         }
 

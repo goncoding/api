@@ -1,5 +1,7 @@
 package com.daesung.api.history.web;
 
+import com.daesung.api.accounts.CurrentUser;
+import com.daesung.api.accounts.domain.Account;
 import com.daesung.api.common.response.ErrorResponse;
 import com.daesung.api.history.domain.History;
 import com.daesung.api.history.domain.HistoryDetail;
@@ -10,7 +12,6 @@ import com.daesung.api.history.resource.HistoryListResource;
 import com.daesung.api.history.resource.HistoryResource;
 import com.daesung.api.history.web.dto.HistoryDetailDto;
 import com.daesung.api.history.web.dto.HistorytDto;
-import com.daesung.api.news.domain.News;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
@@ -64,7 +66,8 @@ public class HistoryController {
     public ResponseEntity getHistoryListGet(Pageable pageable,
                                          PagedResourcesAssembler<History> assembler,
                                          @RequestParam(name = "page", required = false, defaultValue = "") String page,
-                                         @RequestParam(name = "size", required = false, defaultValue = "") String size) {
+                                         @RequestParam(name = "size", required = false, defaultValue = "") String size,
+                                         @PathVariable(name = "lang", required = true) String lang) {
 
         Page<History> historyPage = historyRepository.findAll(pageable);
         PagedModel<HistoryListResource> pagedModel = assembler.toModel(historyPage, h -> new HistoryListResource(h));
@@ -130,11 +133,15 @@ public class HistoryController {
     }
 
     /**
-     * 연혁 상세 리스트 조회
+     * 연혁상세 리스트 조회
      */
     @GetMapping(value = "/detail", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyDetailGetList(Pageable pageable,
-                                               PagedResourcesAssembler<HistoryDetail> assembler) {
+                                               PagedResourcesAssembler<HistoryDetail> assembler,
+                                               @PathVariable(name = "lang", required = true) String lang,
+                                               @CurrentUser Account account) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         Sort sort = Sort.by("hdYear").descending().and(Sort.by("hdMonth").descending()).and(Sort.by("hdSequence").descending());
         Pageable pageRequest = PageRequest.of(0, 10, sort);
@@ -151,7 +158,12 @@ public class HistoryController {
      */
     @GetMapping(value = "/detail/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity historyDetailGet(@PathVariable(name = "id", required = false) Long id,
-                                           @PathVariable(name = "lang", required = true) String lang){
+                                           @PathVariable(name = "lang", required = true) String lang,
+                                           @CurrentUser Account account){
+
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        User principal = (User) authentication.getPrincipal(); //AccountService에서 return 객체가 나옴
+//        principal.getUsername();
 
         Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
         if (!optionalHistoryDetail.isPresent()) {
@@ -160,19 +172,25 @@ public class HistoryController {
         HistoryDetail historyDetail = optionalHistoryDetail.get();
 
         HistoryDetailResource historyDetailResource = new HistoryDetailResource(historyDetail);
-        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
-        historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage())).withSelfRel());
 
-        return ResponseEntity.ok(new HistoryDetailResource(historyDetail));
+        if (account != null) {
+            historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage(),account)).withSelfRel());
+            historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage(),account)).withRel("detail-update"));
+        }
+
+        return ResponseEntity.ok(historyDetailResource);
     }
 
     /**
-     * 연혁 상세 등록
+     * 연혁상세 등록
      */
     @PostMapping(value = "/detail", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyDetailInsert(@RequestBody @Valid HistoryDetailDto detailDto,
                                               Errors errors,
-                                              @PathVariable(name = "lang", required = true) String lang) {
+                                              @PathVariable(name = "lang", required = true) String lang,
+                                              @CurrentUser Account account) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (errors.hasErrors()) {
             return ResponseEntity.badRequest().body(errors);
