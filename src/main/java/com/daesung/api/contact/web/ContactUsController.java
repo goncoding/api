@@ -2,7 +2,9 @@ package com.daesung.api.contact.web;
 
 import com.daesung.api.common.domain.Manager;
 import com.daesung.api.common.repository.ManagerRepository;
+import com.daesung.api.common.resource.ManagerDtoResource;
 import com.daesung.api.common.response.ErrorResponse;
+import com.daesung.api.common.web.dto.ManagerDto;
 import com.daesung.api.contact.domain.ContactUs;
 import com.daesung.api.contact.domain.enumType.Cucheck;
 import com.daesung.api.contact.repository.ContactUsRepository;
@@ -10,6 +12,8 @@ import com.daesung.api.contact.repository.condition.ContactSearchCondition;
 import com.daesung.api.contact.resource.ContactUsListResource;
 import com.daesung.api.contact.resource.ContactUsResource;
 import com.daesung.api.contact.web.dto.ContactUsDto;
+import com.daesung.api.contact.web.dto.ContactUsUpdateDto;
+import com.daesung.api.ethical.domain.EthicalReport;
 import com.daesung.api.history.domain.History;
 import com.daesung.api.history.resource.HistoryListResource;
 import com.daesung.api.history.resource.HistoryResource;
@@ -20,6 +24,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
@@ -30,6 +35,8 @@ import javax.validation.Valid;
 import java.util.Optional;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,6 +58,7 @@ public class ContactUsController {
                                             @RequestParam(name = "size", required = false, defaultValue = "") String size) {
 
         ContactSearchCondition searchCondition = new ContactSearchCondition();
+        searchCondition.setSearchType(searchType);
 
         if ("name".equals(searchType)) {
             searchCondition.setSearchName(searchText);
@@ -101,8 +109,6 @@ public class ContactUsController {
     /**
      *  1대1 문의 단건 조회
      */
-
-    //연혁 불러오기
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity contactGet(@PathVariable(name = "id", required = true) Long id,
                                      @PathVariable(name = "lang", required = true) String lang){
@@ -113,14 +119,19 @@ public class ContactUsController {
         }
         ContactUs contactUs = optionalContactUs.get();
 
-        return ResponseEntity.ok(new ContactUsResource(contactUs));
+        //todo 1. 수정 만들어지면 link 추가하기
+        ContactUsResource contactUsResource = new ContactUsResource(contactUs);
+        contactUsResource.add(linkTo(methodOn(ContactUsController.class).getManager(id,lang)).withRel("get-manager(cu_id)"));
+
+
+        return ResponseEntity.ok(contactUsResource);
     }
 
     /**
-     *  1대1 문의 등록
+     *  1대1 문의 수정
      */
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
-    public ResponseEntity contactUpdate(@RequestBody @Valid ContactUsDto contactUsDto,
+    public ResponseEntity contactUpdate(@RequestBody @Valid ContactUsUpdateDto updateDto,
                                         Errors errors,
                                         @PathVariable(name = "id", required = true) Long id,
                                         @PathVariable(name = "lang", required = true) String lang) {
@@ -136,28 +147,86 @@ public class ContactUsController {
 
         ContactUs contactUs = optionalContactUs.get();
 
-        contactUs.updateContactUs(contactUsDto);
 
-        if ("Y".equals(contactUsDto.getCuCheck())) {
+
+        if ("Y".equals(updateDto.getCuCheck())) {
             contactUs.setCuCheck(Cucheck.Y);
         }
-        if ("N".equals(contactUsDto.getCuCheck())) {
+        if ("N".equals(updateDto.getCuCheck())) {
             contactUs.setCuCheck(Cucheck.N);
         }
 
         //답변 또는 매니저가 null이 아니면...
-        if (contactUsDto.getCuAnswer() != null || contactUsDto.getMnNum() != null) {
-            Optional<Manager> optionalManager = managerRepository.findByMnNum(contactUsDto.getMnNum());
+        if (updateDto.getCuAnswer() != null || updateDto.getMnNum() != null || updateDto.getCuMemo() != null) {
+            Optional<Manager> optionalManager = managerRepository.findByMnNum(updateDto.getMnNum());
             if (!optionalManager.isPresent()) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 매니저가 없습니다. 사번 = "+contactUsDto.getMnNum(),"400"));
+                return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 매니저가 없습니다. 매니저를 선택하세요. 사번 = "+updateDto.getMnNum(),"400"));
             }
+            //todo change Answer
             Manager manager = optionalManager.get();
             contactUs.setManager(manager);
+            contactUs.setCuAnswer(updateDto.getCuAnswer());
+            contactUs.setCuMemo(contactUs.getCuMemo());
         }
+        //todo update dto 추가 ( not blank 제거)
+        //todo changedto 추가
+        contactUs.changeContactUs(updateDto);
 
         ContactUs updatedContactUs = contactUsRepository.save(contactUs);
 
-        return ResponseEntity.ok(new ContactUsResource(updatedContactUs));
+        ContactUsResource contactUsResource = new ContactUsResource(updatedContactUs);
+        contactUsResource.add(linkTo(methodOn(ContactUsController.class).getManager(id,lang)).withRel("get-manager(cu_id)"));
+
+        return ResponseEntity.ok(contactUsResource);
+    }
+
+    /**
+     * 매니저 불러오기
+     */
+    @GetMapping(value = "/manager/{id}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity getManager(@PathVariable(name = "id") Long id,
+                                     @PathVariable(name = "lang", required = true) String lang) {
+
+        Optional<ContactUs> optionalContactUs = contactUsRepository.findById(id);
+        if (!optionalContactUs.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 1대1 문의가 없습니다.","400"));
+        }
+
+        ContactUs contactUs = optionalContactUs.get();
+
+
+        Manager contactUsManager = contactUs.getManager();
+        if (contactUsManager == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("담당 매니저가 없습니다.","404"));
+        }
+
+        String mnNum = contactUsManager.getMnNum();
+
+        Optional<Manager> optionalManager = managerRepository.findByMnNum(mnNum);
+        if (!optionalManager.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 매니저 정보가 없습니다. 사번을 확인해주세요."));
+        }
+
+        ManagerDto managerDto = getManagerDto(optionalManager);
+
+        ManagerDtoResource managerDtoResource = new ManagerDtoResource(managerDto, lang);
+
+        return ResponseEntity.ok(managerDtoResource);
+    }
+
+    private static ManagerDto getManagerDto(Optional<Manager> optionalManager) {
+        Manager manager = optionalManager.get();
+        ManagerDto managerDto = ManagerDto.builder()
+                .id(manager.getId())
+                .mnNum(manager.getMnNum())
+                .mnCategory(manager.getMnCategory())
+                .mnName(manager.getMnName())
+                .mnDepartment(manager.getMnDepartment())
+                .mnPosition(manager.getMnPosition())
+                .mnPhone(manager.getMnPhone())
+                .mnEmail(manager.getMnEmail())
+                .build();
+        return managerDto;
     }
 
 

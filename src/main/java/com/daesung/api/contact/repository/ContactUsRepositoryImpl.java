@@ -6,6 +6,7 @@ import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -52,7 +53,7 @@ public class ContactUsRepositoryImpl implements ContactUsRepositoryCustom{
                 String property = order.getProperty();
                 switch (property) {
                     case "cuId":
-                        return new OrderSpecifier<>(direction,contactUs.cuId);
+                        return new OrderSpecifier<>(direction,contactUs.id);
                     case "cuName":
                         return new OrderSpecifier<>(direction,contactUs.cuName);
                     case "regDate":
@@ -60,23 +61,23 @@ public class ContactUsRepositoryImpl implements ContactUsRepositoryCustom{
                 }
             }
         }
-        return new OrderSpecifier<>(Order.DESC,contactUs.cuId);
+        return new OrderSpecifier<>(Order.DESC,contactUs.id);
     }
 
-    private Predicate nameEq(String searchName) {
+    private BooleanExpression nameEq(String searchName) {
         return searchName == null ? null : contactUs.cuName.contains(searchName);
     }
 
-    private Predicate textEq(String searchText) {
+    private BooleanExpression textEq(String searchText) {
         return searchText == null ? null : contactUs.cuContent.contains(searchText);
     }
 
-    private Predicate busFieldNameEq(String searchFieldName) {
+    private BooleanExpression busFieldNameEq(String searchFieldName) {
         return searchFieldName == null ? null : contactUs.businessField.busFieldName.contains(searchFieldName);
     }
 
-    private Predicate mnNameEq(String searchName) {
-        return searchName == null ? null : contactUs.manager.mnName.contains(searchName);
+    private BooleanExpression mnNameEq(String searchMnName) {
+        return searchMnName == null ? null : contactUs.manager.mnName.contains(searchMnName);
     }
 
 }

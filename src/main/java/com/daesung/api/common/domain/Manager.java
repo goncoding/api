@@ -1,5 +1,6 @@
 package com.daesung.api.common.domain;
 
+import com.daesung.api.ethical.web.EthicalReportController;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
@@ -20,7 +21,8 @@ public class Manager extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "mn_id")
-    private Long mnId;
+    private Long id;
+    @Column(unique = true)
     private String mnNum;
     private String mnCategory;
     private String mnName;
@@ -35,7 +37,6 @@ public class Manager extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bus_field_id")
     private BusinessField businessField;
-
 
 
 }

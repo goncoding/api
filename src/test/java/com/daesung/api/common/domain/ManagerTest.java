@@ -6,6 +6,7 @@ import com.daesung.api.common.repository.ManagerRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.Commit;
 
 class ManagerTest extends BaseControllerTest {
 
@@ -14,6 +15,27 @@ class ManagerTest extends BaseControllerTest {
 
     @Autowired
     BusinessFieldRepository businessFieldRepository;
+
+    @DisplayName("dummay 하나 추가")
+    @Test
+    public void _테스트_insert() throws Exception{
+
+        BusinessField businessField01 = businessFieldRepository.findById(19L).get();
+
+        Manager manager01 = Manager.builder()
+                .mnNum("1105")
+                .mnName("김상수")
+//                .mnCategory(MnCategory.DS_RELAY)
+                .mnCategory("윤리경영신고")
+                .mnDepartment("감사실")
+                .mnPosition("대리")
+                .mnPhone("010-2222-3333")
+                .mnEmail("aaa@email.com")
+                .businessField(businessField01)
+                .build();
+
+        managerRepository.save(manager01);
+    }
 
     @DisplayName("dummay data insert")
     @Test

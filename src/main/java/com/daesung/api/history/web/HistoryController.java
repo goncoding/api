@@ -51,7 +51,6 @@ public class HistoryController {
     @Value("${file.dir}")
     private String fileDir;
 
-
     String savePath = "/history";
     String thumbWhiteList = "jpg, gif, png";
 
@@ -200,9 +199,15 @@ public class HistoryController {
         String dtoHdYear = detailDto.getHdYear();
         History searchHistory = historyRepository.searchHistoryBetween(dtoHdYear);
 
-        List<HistoryDetail> sequenceEqYear = historyDetailRepository.findByHdSequenceEqYearPlus(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
-        for (HistoryDetail historyDetail : sequenceEqYear) {
-            historyDetail.plusSequence();
+        /**
+         *  빈 seq 는 insert , 빈 seq 아닐시 아래로 +1
+         */
+        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
+        if (detailSequenceCheck != null) {
+            List<HistoryDetail> sequenceEqYear = historyDetailRepository.findByHdSequenceEqYearPlus(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
+            for (HistoryDetail historyDetail : sequenceEqYear) {
+                historyDetail.plusSequence();
+            }
         }
 
         HistoryDetail historyDetail = HistoryDetail.builder()

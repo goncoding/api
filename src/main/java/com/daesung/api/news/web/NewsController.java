@@ -2,6 +2,8 @@ package com.daesung.api.news.web;
 
 import com.daesung.api.common.error.ErrorResource;
 import com.daesung.api.common.response.ErrorResponse;
+import com.daesung.api.news.NewsFileStore;
+import com.daesung.api.news.NewsThumbFileStore;
 import com.daesung.api.news.domain.News;
 import com.daesung.api.news.domain.NewsFile;
 import com.daesung.api.news.domain.NewsThumbnailFile;
@@ -61,11 +63,16 @@ public class NewsController {
 
 
     String savePath = "/news";
-    String whiteList = "hwp, pdf, pptx, ppt, xlsx, xls, xps, zip";
+    String whiteList = "jpg,gif,png,hwp,pdf,pptx,ppt,xlsx,xls,xps,zip";
 
     String thumbWhiteList = "jpg, gif, png";
 
     private final ModelMapper modelMapper;
+
+    private final NewsThumbFileStore newsThumbFileStore;
+
+    private final NewsFileStore newsFileStore;
+
     private final FileStore fileStore;
     private final NewsRepository newsRepository;
     private final NewsThumbnailFileRepository newsThumbnailFileRepository;
@@ -73,7 +80,9 @@ public class NewsController {
 
     private final NewsValidation newsValidation;
 
-
+    /**
+     * (뉴스&보도) 리스트 조회
+     */
     @GetMapping(produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity getNewsList(Pageable pageable,
                                       PagedResourcesAssembler<News> assembler,
@@ -106,7 +115,9 @@ public class NewsController {
         return ResponseEntity.ok().body(pagedModel);
     }
 
-    //뉴스 등록
+    /**
+     * (뉴스&보도) 단건 등록
+     */
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity newsPost(
@@ -273,7 +284,9 @@ public class NewsController {
     }
 
 
-
+    /**
+     * (뉴스&보도) 단건 수정
+     */
     @PutMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity newsPost(
             @PathVariable Long id,
@@ -313,8 +326,13 @@ public class NewsController {
             //뉴스 섬네일 업로드
             if (thumbnailFile != null) {
                 try {
+                    //todo 기존거 조회해 와서 삭제... 파일 오류시에 먼저 삭제된다...
+                    List<NewsThumbnailFile> thumbnailFiles = newsThumbnailFileRepository.findByNewsId(id);
+                    for (NewsThumbnailFile file : thumbnailFiles) {
+                        deleteFile(file);
+                    }
 
-                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
+                    UploadFile uploadFile = newsThumbFileStore.storeFile(thumbnailFile, savePath, thumbWhiteList, id);
                     if (uploadFile.isWrongType()) {
                         return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                     }
@@ -336,7 +354,7 @@ public class NewsController {
             //뉴스파일 업로드
             if (newsFiles != null) {
                 try {
-                    List<UploadFile> uploadFiles = fileStore.storeFileList(newsFiles, savePath, whiteList);
+                    List<UploadFile> uploadFiles = newsFileStore.storeFileList(newsFiles, savePath, whiteList, id);
 
                     for (UploadFile uploadFile : uploadFiles) {
                         if (uploadFile.isWrongType()) {
@@ -359,6 +377,8 @@ public class NewsController {
 
                         newsFileRepository.save(newsFile);
 
+
+
                     }
 
                 } catch (IOException e) {
@@ -374,6 +394,10 @@ public class NewsController {
 
         //보도
         if ("RE".equals(newsDto.getNbType())) {
+
+            if (thumbnailFile != null || newsFiles != null) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("파일업로드는 뉴스만 가능합니다.","404"));
+            }
 
             news.setTitle(newsDto.getTitle());
             news.setNewCompany(newsDto.getNewCompany());
@@ -395,7 +419,18 @@ public class NewsController {
 
     }
 
+    private static void deleteFile(NewsThumbnailFile savedThumbFile) {
+        String fileSavedPath = savedThumbFile.getThumbnailFileSavedPath() + "/" + savedThumbFile.getThumbnailFileSavedName();
 
+        File file = new File(fileSavedPath);
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
+    /**
+     * (뉴스&보도) 단건 삭제
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity deleteNews(@PathVariable Long id){
         if (id == null) {
@@ -433,44 +468,48 @@ public class NewsController {
         return ResponseEntity.ok(id+"번 삭제 성공");
     }
 
-
+    /**
+     * (뉴스&보도) 썸네일 이미지 출력
+     */
     @ResponseBody
-    @GetMapping("/viewThumb/{newsSeq}")
+    @GetMapping("/viewThumb/{newsId}")
     public ResponseEntity viewThumbnail(
             HttpServletRequest request,
             HttpServletResponse response,
-            @PathVariable Long newsSeq) throws MalformedURLException {
+            @PathVariable Long newsId) throws MalformedURLException {
 
         AccessLogUtil.fileViewAccessLog(request);
         NewsThumbnailFile thumbnailFile;
-        if (newsSeq == null) {
+
+        if (newsId == null) {
             thumbnailFile = new NewsThumbnailFile();
         } else {
-            List<NewsThumbnailFile> thumbList = newsThumbnailFileRepository.findByNewsIdOrderByRegDateDesc(newsSeq);
+            List<NewsThumbnailFile> thumbList = newsThumbnailFileRepository.findByNewsIdOrderByRegDateDesc(newsId);
+
             if (thumbList == null || thumbList.size() == 0) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 썸네일 정보가 없습니다. 사용자 id를 확인해주세요."));
             }
             NewsThumbnailFile newsThumbnailFile = thumbList.get(0);
 //            File serverFile = new File(fileDir + savePath + "/" + newsThumbnailFile.getThumbnailFileSavedName());
-            File serverFile = new File(newsThumbnailFile.getThumbnailFileSavedPath());
+            String pathname = newsThumbnailFile.getThumbnailFileSavedPath() + "/" + newsThumbnailFile.getThumbnailFileSavedName();
+            File serverFile = new File(pathname);
             NasFileComponent.putFileToResponseStreamAsView(response, serverFile);
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 썸네일 정보가 없습니다. 사용자 id를 확인해주세요."));
     }
 
     //image 출력 파일 가져오기
-    //todo foldername, filename이 인자로 들어오지 않고 바로 id값으로 이미지 출력할 수 있도록 수정 필요
-    @GetMapping("/viewImage/{folderName}/{fileName}")
+    //todo foldername, filename이 인자로 들어오지 않고 바로 id값으로 이미지 출력할 수 있도록 수정 필요 -> list라서 단일로..
+    @GetMapping("/viewImage/{folderName}/{fileSaveName}")
     public void viewEditorImages(
             HttpServletRequest request,
             HttpServletResponse response,
             @PathVariable String folderName,
-            @PathVariable String fileName) {
+            @PathVariable String fileSaveName) {
         AccessLogUtil.fileViewAccessLog(request);
 
-        File serverFile = new File(fileDir + savePath + "/" + folderName + "/" +fileName);
+        File serverFile = new File(fileDir + savePath + "/" + folderName + "/" +fileSaveName);
         NasFileComponent.putFileToResponseStreamAsView(response, serverFile);
-
     }
 
 

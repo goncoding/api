@@ -17,13 +17,13 @@ class BusinessRepositoryTest extends BaseControllerTest {
     @Autowired
     BusinessRepository businessRepository;
 
-    @DisplayName("")
+    @DisplayName("단일 dummy data")
     @Test
     public void _테스트2() throws Exception{
 
         Business business01 = Business.builder()
-                .businessName("GREEN ENERGY")
-                .businessInfo("GREEN ENERGY INFO")
+                .businessName("감사실")
+                .businessInfo("정보 감사실")
                 .build();
 
         businessRepository.save(business01);

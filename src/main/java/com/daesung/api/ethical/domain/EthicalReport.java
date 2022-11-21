@@ -1,9 +1,14 @@
 package com.daesung.api.ethical.domain;
 
+import com.daesung.api.ethical.domain.enumType.ErCheck;
+import com.daesung.api.ethical.web.dto.EthicalReportDto;
+import com.daesung.api.ethical.web.dto.EthicalReportUpdateDto;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.common.domain.BusinessField;
 import com.daesung.api.common.domain.Manager;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.persistence.*;
 
@@ -13,30 +18,35 @@ import javax.persistence.*;
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"businessField", "bus_field_no"})
+@ToString(exclude = {"businessField", "manager"})
 @Builder
 @Table(name = "ds_ethical_report")
 public class EthicalReport extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ds_id")
-    private Long dsId;
-    private String dsName;
-    private String dsEmail;
-    private String dsPhone;
-    private String dsTitle;
+    @Column(name = "er_id")
+    private Long id;
+    private String erName;
+    private String erEmail;
+    private String erPhone;
+    private String erTitle;
     @Column(columnDefinition = "TEXT")
-    private String dsContent;
-    private String dsCheck;
-    private String dsAnswer;
-    @Column(columnDefinition = "TEXT")
-    private String dsMemo;
+    private String erContent;
 
+    @Enumerated(EnumType.STRING)
+    private ErCheck erCheck = ErCheck.N;
+
+    private String erAnswer;
+    @Column(columnDefinition = "TEXT")
+    private String erMemo;
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bus_field_no")
+    @JoinColumn(name = "bus_field_id")
     private BusinessField businessField;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mn_id")
     private Manager manager;
@@ -44,4 +54,18 @@ public class EthicalReport extends BaseTimeEntity {
     private String language;
 
 
+    public void changeAnswer(EthicalReportUpdateDto dto, Manager manager) {
+        this.manager = manager;
+        this.erAnswer = dto.getErAnswer();
+        this.erMemo = dto.getErMemo();
+    }
+
+
+    public void changeReport(EthicalReportUpdateDto dto) {
+        this.erName = dto.getErName();
+        this.erEmail = dto.getErEmail();
+        this.erPhone = dto.getErPhone();
+        this.erTitle = dto.getErTitle();
+        this.erContent = dto.getErContent();
+    }
 }

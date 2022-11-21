@@ -49,44 +49,42 @@ class ContactUsControllerTest extends BaseControllerTest {
     @Test
     public void post_insert_ok() throws Exception{
 
-        Random random = new Random();
-        for (int i = 3; i < 100; i++) {
-
-
-
-            String value = String.valueOf(random.nextInt((3 - 1) + 1) + 1);
-
-            ContactUsDto dto = ContactUsDto.builder()
-                    .cuName("홍길동0" + i)
-                    .cuEmail("a" + i + "@email.com")
-                    .cuPhone("010-222-3333")
-                    .cuContent("문의 내용..." + i)
-                    .mnNum(value)
-                    .build();
-
-            mockMvc.perform(post("/kr/contact")
-                            .contentType(MediaType.APPLICATION_JSON_VALUE)
-                            .content(objectMapper.writeValueAsString(dto))
-                    )
-                    .andExpect(status().isOk())
-            ;
-        }
-
-//    ContactUsDto dto = ContactUsDto.builder()
-//                    .cuName("홍길동")
-//                    .cuEmail("aaa@email.com")
+//        Random random = new Random();
+//        for (int i = 3; i < 100; i++) {
+//
+//            String value = String.valueOf(random.nextInt((3 - 1) + 1) + 1);
+//
+//            ContactUsDto dto = ContactUsDto.builder()
+//                    .cuName("홍길동0" + i)
+//                    .cuEmail("a" + i + "@email.com")
 //                    .cuPhone("010-222-3333")
-//                    .cuContent("문의 내용...")
+//                    .cuContent("문의 내용..." + i)
+//                    .mnNum(value)
 //                    .build();
 //
-//
-//        mockMvc.perform(post("/kr/contact")
-//                .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                .content(objectMapper.writeValueAsString(dto))
-//        )
-//                .andExpect(status().isOk())
-//                .andDo(print())
-//                ;
+//            mockMvc.perform(post("/kr/contact")
+//                            .contentType(MediaType.APPLICATION_JSON_VALUE)
+//                            .content(objectMapper.writeValueAsString(dto))
+//                    )
+//                    .andExpect(status().isOk())
+//            ;
+//        }
+
+    ContactUsDto dto = ContactUsDto.builder()
+                    .cuName("홍길동")
+                    .cuEmail("aaa@email.com")
+                    .cuPhone("010-222-3333")
+                    .cuContent("문의 내용...")
+                    .build();
+
+
+        mockMvc.perform(post("/kr/contact")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(objectMapper.writeValueAsString(dto))
+        )
+                .andExpect(status().isOk())
+                .andDo(print())
+                ;
     }
 
     @DisplayName("1대1 등록 - bad_request_email")

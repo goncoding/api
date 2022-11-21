@@ -20,6 +20,22 @@ class BusinessFieldRepositoryTest extends BaseControllerTest {
     @Autowired
     BusinessRepository businessRepository;
 
+    @DisplayName("단일 dummy data")
+    @Test
+    @Commit
+    public void _테스트_insert() throws Exception{
+
+        Business business = businessRepository.findById(7L).get();
+        BusinessField businessField01 = BusinessField.builder()
+                .busFieldName("윤리경영신고")
+                .busFieldInfo("정보 윤리경영신고")
+                .business(business)
+                .build();
+
+        businessFieldRepository.save(businessField01);
+
+    }
+
     @DisplayName("dummy data")
     @Test
     @Commit
@@ -156,6 +172,15 @@ class BusinessFieldRepositoryTest extends BaseControllerTest {
         businessFieldRepository.save(businessField17);
         businessFieldRepository.save(businessField18);
 
+
+    }
+
+    @DisplayName("repository test")
+    @Test
+    public void _테스트_repository() throws Exception{
+
+//        BusinessField fieldName = businessFieldRepository.findByBusFieldName("윤리경영신고");
+//        System.out.println("fieldName = " + fieldName);
 
     }
 

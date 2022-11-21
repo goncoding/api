@@ -2,6 +2,8 @@ package com.daesung.api.common.domain;
 
 import com.daesung.api.utils.date.BaseTimeEntity;
 import lombok.*;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.persistence.*;
 
@@ -21,6 +23,7 @@ public class BusinessField extends BaseTimeEntity {
     @Column(name = "bus_field_id")
     private Long id;
     private String busFieldName;
+    private String busFieldNum;
     private String busFieldInfo;
 
     @ManyToOne(fetch = FetchType.LAZY)

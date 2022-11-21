@@ -13,6 +13,7 @@ class ManagerRepositoryTest extends BaseControllerTest {
     @Autowired
     ManagerRepository managerRepository;
 
+
     @DisplayName("")
     @Test
     public void _테스트() throws Exception{

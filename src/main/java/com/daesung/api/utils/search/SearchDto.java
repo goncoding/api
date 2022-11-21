@@ -11,6 +11,6 @@ public class SearchDto {
 
     private String searchType;
     private String searchText;
-
+    private String recordType;
 
 }

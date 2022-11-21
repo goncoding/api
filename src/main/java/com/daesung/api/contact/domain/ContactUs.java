@@ -2,6 +2,7 @@ package com.daesung.api.contact.domain;
 
 import com.daesung.api.contact.domain.enumType.Cucheck;
 import com.daesung.api.contact.web.dto.ContactUsDto;
+import com.daesung.api.contact.web.dto.ContactUsUpdateDto;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.common.domain.BusinessField;
 import com.daesung.api.common.domain.Manager;
@@ -16,7 +17,7 @@ import javax.persistence.*;
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"businessField", "bus_field_id"})
+@ToString(exclude = {"businessField", "manager"})
 @Builder
 @Table(name = "ds_contact_us")
 public class ContactUs extends BaseTimeEntity {
@@ -24,7 +25,7 @@ public class ContactUs extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cu_id")
-    private Long cuId;
+    private Long id;
     private String cuName;
     private String cuEmail;
     private String cuPhone;
@@ -53,12 +54,10 @@ public class ContactUs extends BaseTimeEntity {
     private String language;
 
 
-    public void updateContactUs(ContactUsDto contactUsDto) {
-        this.cuName = contactUsDto.getCuName();
-        this.cuEmail = contactUsDto.getCuEmail();
-        this.cuEmail = contactUsDto.getCuEmail();
-        this.cuContent = contactUsDto.getCuContent();
-        this.cuAnswer = contactUsDto.getCuAnswer();
-        this.cuMemo = contactUsDto.getCuMemo();
+    public void changeContactUs(ContactUsUpdateDto dto) {
+        this.cuName = dto.getCuName();
+        this.cuPhone = dto.getCuPhone();
+        this.cuEmail = dto.getCuEmail();
+        this.cuContent = dto.getCuContent();
     }
 }

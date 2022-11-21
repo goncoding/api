@@ -26,21 +26,22 @@ public class Search {
     //연혁 히스테리 기록 //        NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
     private HrCategory hrCategory;
 
+    private String recordType;
 
-    public String getParams() {
-        final String[] params = {searchType, searchText, nbType};
-        String result = "";
-        for (int i = 0, size = params.length; i < size; i++) {
-            result += StrUtil.isEmpty(params[i]) ? "" : String.format("&param%d=%s", i + 1, params[i]);
-        }
-        return StrUtil.encodeKR(result.replaceAll("^&", ""));
-    }
-
-    public String getQuery() {
-        return String.format("%s&%s", getPageInfo(), getParams()).replaceAll("(^&|&$)", "");
-    }
-
-    public String getPageInfo() {
-        return String.format("page=%d&pageSize=%d", page, size);
-    }
+//    public String getParams() {
+//        final String[] params = {searchType, searchText, nbType, recordType};
+//        String result = "";
+//        for (int i = 0, size = params.length; i < size; i++) {
+//            result += StrUtil.isEmpty(params[i]) ? "" : String.format("&param%d=%s", i + 1, params[i]);
+//        }
+//        return StrUtil.encodeKR(result.replaceAll("^&", ""));
+//    }
+//
+//    public String getQuery() {
+//        return String.format("%s&%s", getPageInfo(), getParams()).replaceAll("(^&|&$)", "");
+//    }
+//
+//    public String getPageInfo() {
+//        return String.format("page=%d&pageSize=%d", page, size);
+//    }
 }

@@ -48,7 +48,10 @@ public class ManagerController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 매니저 정보가 없습니다. 사번을 확인해주세요."));
         }
 
-        return ResponseEntity.ok(optionalManager.get());
+
+        Manager body = optionalManager.get();
+
+        return ResponseEntity.ok(body);
     }
 
 

@@ -64,7 +64,11 @@ class HistoryRecordControllerTest extends BaseControllerTest {
                 .andExpect(status().isOk());
     }
 
- @DisplayName("(연혁기록) 수정 - 성공")
+    /**
+     * 기존 file { id, seq}와 동일한 데이터가 있으면 안됨.
+     * 75번에 01파일 추가시 01파일은 삭제되어있어야함.
+     */
+    @DisplayName("(연혁기록) 수정 - 성공")
     @Test
     public void _테스트_update() throws Exception{
 
@@ -79,17 +83,26 @@ class HistoryRecordControllerTest extends BaseControllerTest {
         String valueAsString = objectMapper.writeValueAsString(recordDto);
 
         MockMultipartFile jsonResult = new MockMultipartFile("recordDto", "recordDto", "application/json", valueAsString.getBytes(StandardCharsets.UTF_8));
-        MockMultipartFile multipartFile = new MockMultipartFile("recordFiles", "cat01.jpg", "image/jpeg", valueAsString.getBytes(StandardCharsets.UTF_8));
+        MockMultipartFile multipartFile01 = new MockMultipartFile("recordFiles", "cat01.jpg", "image/jpeg", valueAsString.getBytes(StandardCharsets.UTF_8));
+        MockMultipartFile multipartFile02 = new MockMultipartFile("recordFiles", "cat02.jpg", "image/jpeg", valueAsString.getBytes(StandardCharsets.UTF_8));
 
-        mockMvc.perform(multipart("/{lang}/history/record/modify/{id}","kr","1")
+        mockMvc.perform(multipart("/{lang}/history/record/modify/{id}","kr","75")
                         .file(jsonResult)
-                        .file(multipartFile)
+                        .file(multipartFile01)
+                        .file(multipartFile02)
                 )
                 .andDo(print())
                 .andExpect(status().isOk());
     }
 
+    @DisplayName("(연혁기록) 단건 삭제")
+    @Test
+    public void _테스트_delete() throws Exception{
 
+        mockMvc.perform(delete("/{lang}/history/record/{id}","kr","7"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
 
 
 

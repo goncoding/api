@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 public class ContactSearchCondition {
 
     private Long searchId;
+
+    private String searchType; //조회 조건
+
     private String searchName;
     private String searchText;
     private String searchFieldName;

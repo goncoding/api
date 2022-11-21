@@ -7,15 +7,18 @@ import com.daesung.api.history.domain.enumType.HrCategory;
 import com.daesung.api.history.repository.HistoryRecordFileRepository;
 import com.daesung.api.history.repository.HistoryRecordRepository;
 import com.daesung.api.history.resource.HistoryRecordFileResource;
+import com.daesung.api.history.resource.HistoryRecordGetResource;
 import com.daesung.api.history.resource.HistoryRecordResource;
 import com.daesung.api.history.resource.HistoryResource;
 import com.daesung.api.history.web.dto.RecordDto;
+import com.daesung.api.history.web.dto.RecordListResponseDto;
 import com.daesung.api.history.web.dto.recordResponseDto;
 import com.daesung.api.news.domain.NewsThumbnailFile;
 import com.daesung.api.news.web.dto.NewsGetResponseDto;
 import com.daesung.api.utils.HtmlStringUtil;
 import com.daesung.api.utils.StrUtil;
 import com.daesung.api.utils.search.Search;
+import com.daesung.api.utils.search.SearchDto;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
@@ -64,8 +67,10 @@ public class HistoryRecordController {
     private final HistoryRecordFileRepository historyRecordFileRepository;
     private final FileStore fileStore;
 
+//    private final CustomPagedResourceAssembler<HistoryRecord> assembler;
+
     /**
-     * 히스토리 리스토 조회
+     * 히스토리 리스트 조회
      */
     @GetMapping(produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity recordList(Pageable pageable,
@@ -73,11 +78,17 @@ public class HistoryRecordController {
                                      @RequestParam(name = "searchType", required = false, defaultValue = "") String searchType,
                                      @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
                                      @RequestParam(name = "recordType", required = false, defaultValue = "") String recordType,
-                                     @RequestParam(name = "page", required = false, defaultValue = "") String page,
-                                     @RequestParam(name = "size", required = false, defaultValue = "") String size,
+                                     @RequestParam(name = "page", required = false, defaultValue = "") Integer page,
+                                     @RequestParam(name = "size", required = false, defaultValue = "") Integer size,
                                      @PathVariable(name = "lang", required = true) String lang) {
 //        NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
         Search search = new Search();
+        //todo 상황에 따라서 뒤에 queryString을 만들 필요가 있다.
+        search.setRecordType(recordType);
+        search.setSearchType(searchType);
+        search.setSearchText(searchText);
+//        search.setPage(page);
+//        search.setSize(size);
 
         if ("tit".equals(searchType)) {
             search.setSearchTitle(searchText);
@@ -92,12 +103,34 @@ public class HistoryRecordController {
             search.setHrCategory(HrCategory.CI);
         }
 
+//        String params = search.getParams();
+//        String query = search.getQuery();
+//        String pageInfo = search.getPageInfo();
+
         Pageable pageRequest = PageRequest.of(0, 10);
 
-        Page<HistoryRecord> historyRecords = historyRecordRepository.searchRecordList(search, pageRequest);
-        PagedModel<EntityModel<HistoryRecord>> pagedModel = assembler.toModel(historyRecords, e -> new HistoryRecordResource(e));
 
-        return ResponseEntity.ok(pagedModel);
+
+        //todo page 넘기면서 검색 값 같이 넘기기
+        Page<HistoryRecord> historyRecords = historyRecordRepository.searchRecordList(search, pageRequest);
+
+        SearchDto searchDto = new SearchDto(searchType,searchText,recordType);
+
+        PagedModel<EntityModel<HistoryRecord>> pagedModel = assembler.toModel(historyRecords, e -> {
+            HistoryRecordResource historyRecordResource = new HistoryRecordResource(e);
+            historyRecordResource.setSearchDto(searchDto);
+            return historyRecordResource;
+        });
+
+        PagedModel<EntityModel<HistoryRecord>> pagedModel01 = assembler.toModel(historyRecords, e -> {
+            HistoryRecordResource historyRecordResource = new HistoryRecordResource(e);
+            return historyRecordResource;
+        });
+
+
+        RecordListResponseDto recordListResponseDto = new RecordListResponseDto(pagedModel, search);
+
+        return ResponseEntity.ok(pagedModel01);
     }
 
     /**
@@ -115,7 +148,8 @@ public class HistoryRecordController {
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();
 
-        HistoryRecordResource historyRecordResource = new HistoryRecordResource(historyRecord);
+
+
         //todo update 만들면 resource 추가
 //        historyRecordResource.add(linkTo());
 
@@ -123,7 +157,17 @@ public class HistoryRecordController {
 
         recordResponseDto recordResponseDto = new recordResponseDto(historyRecord, historyRecordFileList);
 
-        return ResponseEntity.ok(recordResponseDto);
+//        HistoryRecordResource historyRecordResource = new HistoryRecordResource(historyRecord);
+
+        long before = id - 1;
+        long after = id + 1;
+
+        HistoryRecordGetResource historyRecordGetResource = new HistoryRecordGetResource(recordResponseDto);
+        historyRecordGetResource.add(linkTo(methodOn(HistoryRecordController.class).recordUpdate(historyRecord.getId(),null,null,null,null,null,null,null, lang)).withRel("update-historyRecord"));
+        historyRecordGetResource.add(linkTo(methodOn(HistoryRecordController.class).recordGet(before,lang)).withRel("get-next"));
+        historyRecordGetResource.add(linkTo(methodOn(HistoryRecordController.class).recordGet(after,lang)).withRel("get-prev"));;
+
+        return ResponseEntity.ok(historyRecordGetResource);
     }
 
 
@@ -141,37 +185,7 @@ public class HistoryRecordController {
         }
         HistoryRecordFile recordFile = optionalRecordFile.get();
 
-        File file = new File(recordFile.getHrFileSavedPath(), recordFile.getHrFileSavedName());
-
-        String name = StrUtil.encodeKR(recordFile.getHrFileOriginalName().replaceAll("(%20| |\\+)+", " "));
-
-        response.setContentType("application/octet-stream");
-        response.setContentLength((int) file.length());
-        response.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\";", name));
-        response.setHeader("Content-Transfer-Encoding", "binary");
-
-        OutputStream out = null;
-        FileInputStream fis = null;
-        try {
-            out = response.getOutputStream();
-            fis = new FileInputStream(file);
-            FileCopyUtils.copy(fis, out);
-            out.flush();
-
-            return ResponseEntity.ok("파일 다운로드 성공");
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getLocalizedMessage(),"500"));
-        } finally {
-            try {
-                if (out != null) out.close();
-            } catch (Exception e) {
-            }
-            try {
-                if (fis != null) fis.close();
-            } catch (Exception e) {
-            }
-        }
+        return download(response, recordFile);
     }
 
 
@@ -331,20 +345,26 @@ public class HistoryRecordController {
         HistoryRecordFileResource historyRecordFileResource = new HistoryRecordFileResource(savedRecord);
         historyRecordFileResource.add(linkTo(HistoryRecordController.class, lang).withSelfRel());
         historyRecordFileResource.add(linkTo(methodOn(HistoryRecordController.class).recordGet(savedRecord.getId(), lang)).withRel("get-historyRecord"));
-        historyRecordFileResource.add(linkTo(methodOn(HistoryRecordController.class).recordUpdate(savedRecord.getId(),null,null,null, lang)).withRel("update-historyRecord"));
+        historyRecordFileResource.add(linkTo(methodOn(HistoryRecordController.class).recordUpdate(savedRecord.getId(),null,null,null,null,null,null,null, lang)).withRel("update-historyRecord"));
 
         return ResponseEntity.ok(historyRecordFileResource);
 
     }
 
-    //todo 수정시 file seq에 따라서 잘 수정되는지 체크하기
+
+    //todo 삭제하고 저장할 수 있도록
+    //todo 순서대로 수정에 반영이 되는지?
     /**
      * 히스토리 수정 조회
      */
     @PostMapping(value = "/modify/{id}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity recordUpdate(@PathVariable(name = "id") Long id,
                                        @RequestPart(name = "recordDto") @Valid RecordDto recordDto, Errors errors,
-                                       @RequestPart(name = "recordFiles") List<MultipartFile> recordFiles,
+                                       @RequestPart(required = false) MultipartFile attachFile01,
+                                       @RequestPart(required = false) MultipartFile attachFile02,
+                                       @RequestPart(required = false) MultipartFile attachFile03,
+                                       @RequestPart(required = false) MultipartFile attachFile04,
+                                       @RequestPart(required = false) MultipartFile attachFile05,
                                        @PathVariable(name = "lang", required = true) String lang) {
 
         List<HistoryRecordFile> recordFileList = new ArrayList<>();
@@ -374,30 +394,173 @@ public class HistoryRecordController {
 
         HistoryRecord savedRecord = historyRecordRepository.save(historyRecord);
 
-        if (recordFiles != null) {
+
+        if (attachFile01 != null) {
             try {
-                List<UploadFile> uploadFiles = fileStore.storeFileList(recordFiles, savePath, whiteList);
 
-                for (UploadFile uploadFile : uploadFiles) {
-                    if (uploadFile.isWrongType()) {
-                        return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
-                    }
-
-                    HistoryRecordFile recordFile = HistoryRecordFile.builder()
-                            .hrFileOriginalName(uploadFile.getOriginName())
-                            .hrFileSavedName(uploadFile.getNewName())
-                            .hrFileSavedPath(uploadFile.getRealPath())
-                            .historyRecord(savedRecord)
-                            .build();
-
-                    HistoryRecordFile savedFile = historyRecordFileRepository.save(recordFile);
-                    recordFileList.add(savedFile);
+                Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "01");
+                if (fileOptional.isPresent()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("1번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
                 }
+
+                UploadFile uploadFile = fileStore.storeFile(attachFile01, savePath, whiteList);
+                if (uploadFile.isWrongType()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                }
+
+                HistoryRecordFile recordFile = HistoryRecordFile.builder()
+                        .hrFileOriginalName(uploadFile.getOriginName())
+                        .hrFileSavedName(uploadFile.getNewName())
+                        .hrFileSavedPath(uploadFile.getRealPath())
+                        .historyRecord(savedRecord)
+                        .hrFileSeq("01")
+                        .build();
+
+                HistoryRecordFile savedFile01 = historyRecordFileRepository.save(recordFile);
+                recordFileList.add(savedFile01);
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+
+        if (attachFile02 != null) {
+            try {
+
+                Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "02");
+                if (fileOptional.isPresent()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("2번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                }
+
+                UploadFile uploadFile = fileStore.storeFile(attachFile02, savePath, whiteList);
+                if (uploadFile.isWrongType()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                }
+
+                HistoryRecordFile recordFile = HistoryRecordFile.builder()
+                        .hrFileOriginalName(uploadFile.getOriginName())
+                        .hrFileSavedName(uploadFile.getNewName())
+                        .hrFileSavedPath(uploadFile.getRealPath())
+                        .historyRecord(savedRecord)
+                        .hrFileSeq("02")
+                        .build();
+
+                HistoryRecordFile savedFile02 = historyRecordFileRepository.save(recordFile);
+                recordFileList.add(savedFile02);
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (attachFile03 != null) {
+            try {
+                Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "03");
+                if (fileOptional.isPresent()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("3번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                }
+
+                UploadFile uploadFile = fileStore.storeFile(attachFile03, savePath, whiteList);
+                if (uploadFile.isWrongType()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                }
+
+                HistoryRecordFile recordFile = HistoryRecordFile.builder()
+                        .hrFileOriginalName(uploadFile.getOriginName())
+                        .hrFileSavedName(uploadFile.getNewName())
+                        .hrFileSavedPath(uploadFile.getRealPath())
+                        .historyRecord(savedRecord)
+                        .hrFileSeq("03")
+                        .build();
+
+                HistoryRecordFile savedFile03 = historyRecordFileRepository.save(recordFile);
+                recordFileList.add(savedFile03);
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (attachFile04 != null) {
+            try {
+                Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "04");
+                if (fileOptional.isPresent()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("4번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                }
+
+                UploadFile uploadFile = fileStore.storeFile(attachFile04, savePath, whiteList);
+                if (uploadFile.isWrongType()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                }
+
+                HistoryRecordFile recordFile = HistoryRecordFile.builder()
+                        .hrFileOriginalName(uploadFile.getOriginName())
+                        .hrFileSavedName(uploadFile.getNewName())
+                        .hrFileSavedPath(uploadFile.getRealPath())
+                        .historyRecord(savedRecord)
+                        .hrFileSeq("04")
+                        .build();
+
+                HistoryRecordFile savedFile04 = historyRecordFileRepository.save(recordFile);
+                recordFileList.add(savedFile04);
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (attachFile05 != null) {
+            try {
+                Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "05");
+                if (fileOptional.isPresent()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("5번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                }
+
+                UploadFile uploadFile = fileStore.storeFile(attachFile05, savePath, whiteList);
+                if (uploadFile.isWrongType()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                }
+
+                HistoryRecordFile recordFile = HistoryRecordFile.builder()
+                        .hrFileOriginalName(uploadFile.getOriginName())
+                        .hrFileSavedName(uploadFile.getNewName())
+                        .hrFileSavedPath(uploadFile.getRealPath())
+                        .historyRecord(savedRecord)
+                        .hrFileSeq("05")
+                        .build();
+
+                HistoryRecordFile savedFile05 = historyRecordFileRepository.save(recordFile);
+                recordFileList.add(savedFile05);
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+//        if (recordFiles != null) {
+//            try {
+//                List<UploadFile> uploadFiles = fileStore.storeFileList(recordFiles, savePath, whiteList);
+//
+//                for (UploadFile uploadFile : uploadFiles) {
+//                    if (uploadFile.isWrongType()) {
+//                        return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+//                    }
+//
+//                    HistoryRecordFile recordFile = HistoryRecordFile.builder()
+//                            .hrFileOriginalName(uploadFile.getOriginName())
+//                            .hrFileSavedName(uploadFile.getNewName())
+//                            .hrFileSavedPath(uploadFile.getRealPath())
+//                            .historyRecord(savedRecord)
+//                            .build();
+//
+//                    HistoryRecordFile savedFile = historyRecordFileRepository.save(recordFile);
+//                    recordFileList.add(savedFile);
+//                }
+//
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
 
         HistoryRecordFileResource historyRecordFileResource = new HistoryRecordFileResource(savedRecord);
 
@@ -406,14 +569,34 @@ public class HistoryRecordController {
         return ResponseEntity.ok(recordResponseDto);
     }
 
-
-    /**
-     * 히스토리 단건 조회 다운로드
-     */
-
     /**
      * 히스토리 삭제 조회
      */
+    @DeleteMapping("/{id}")
+    public ResponseEntity recordDelete(@PathVariable Long id) {
+
+        Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
+        if (!optionalHistoryRecord.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","404"));
+        }
+
+        HistoryRecord historyRecord = optionalHistoryRecord.get();
+
+        Long recordId = historyRecord.getId();
+
+        List<HistoryRecordFile> recordFileList = historyRecordFileRepository.findByHrId(recordId);
+
+        if (recordFileList != null) {
+            for (HistoryRecordFile historyRecordFile : recordFileList) {
+                historyRecordFileRepository.deleteByHrId(recordId);
+                deleteFile(historyRecordFile);
+            }
+        }
+
+        historyRecordRepository.deleteById(recordId);
+
+        return ResponseEntity.ok(recordId+"번 히스토리 기록이 삭제되었습니다.");
+    }
 
 
     /**
@@ -434,19 +617,28 @@ public class HistoryRecordController {
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();
 
-        HistoryRecordFile historyRecordFile = historyRecordFileRepository.findByHrIdAndSeq(historyRecord.getId(), seq);
+        Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(historyRecord.getId(), seq);
+        if (!fileOptional.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id, seq를 확인해주세요.","404"));
+        }
 
+        HistoryRecordFile historyRecordFile = fileOptional.get();
+
+        deleteFile(historyRecordFile);
+
+        historyRecordFileRepository.deleteById(historyRecordFile.getId());
+
+        return ResponseEntity.ok(seq+"번이 삭제 완료되었습니다.");
+
+    }
+
+    private static void deleteFile(HistoryRecordFile historyRecordFile) {
         String fileSavedPath = historyRecordFile.getHrFileSavedPath() + "/" + historyRecordFile.getHrFileSavedName();
 
         File file = new File(fileSavedPath);
         if (file.exists()) {
             file.delete();
         }
-
-        historyRecordFileRepository.deleteById(historyRecordFile.getId());
-
-        return ResponseEntity.ok(seq+"번이 삭제 완료되었습니다.");
-
     }
 
     private static HrCategory getEnumCategory(RecordDto recordDto) {
@@ -462,5 +654,39 @@ public class HistoryRecordController {
             return HrCategory.CI;
         }
         return null;
+    }
+
+    private static ResponseEntity<?> download(HttpServletResponse response, HistoryRecordFile recordFile) {
+        File file = new File(recordFile.getHrFileSavedPath(), recordFile.getHrFileSavedName());
+
+        String name = StrUtil.encodeKR(recordFile.getHrFileOriginalName().replaceAll("(%20| |\\+)+", " "));
+
+        response.setContentType("application/octet-stream");
+        response.setContentLength((int) file.length());
+        response.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\";", name));
+        response.setHeader("Content-Transfer-Encoding", "binary");
+
+        OutputStream out = null;
+        FileInputStream fis = null;
+        try {
+            out = response.getOutputStream();
+            fis = new FileInputStream(file);
+            FileCopyUtils.copy(fis, out);
+            out.flush();
+
+            return ResponseEntity.ok("파일 다운로드 성공");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getLocalizedMessage(), "500"));
+        } finally {
+            try {
+                if (out != null) out.close();
+            } catch (Exception e) {
+            }
+            try {
+                if (fis != null) fis.close();
+            } catch (Exception e) {
+            }
+        }
     }
 }
