@@ -1,6 +1,7 @@
 package com.daesung.api.history.domain;
 
 import com.daesung.api.utils.date.RegTimeEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -27,6 +28,7 @@ public class HistoryRecordFile extends RegTimeEntity {
     private String hrFileSeq;
     private String regUser;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hr_id")
     private HistoryRecord historyRecord;

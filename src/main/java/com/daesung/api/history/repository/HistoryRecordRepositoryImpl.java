@@ -23,7 +23,6 @@ import static com.daesung.api.history.domain.QHistoryRecord.*;
 public class HistoryRecordRepositoryImpl implements HistoryRecordRepositoryCustom{
 
     private final EntityManager em;
-
     private final JPAQueryFactory queryFactory;
 
     @Override

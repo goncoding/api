@@ -44,7 +44,6 @@ public class HistoryDetail {
     }
 
     public void updateDetail(HistoryDetailDto dto) {
-
         this.hdYear = dto.getHdYear();
         this.hdMonth = dto.getHdMonth();
         this.content = dto.getContent();

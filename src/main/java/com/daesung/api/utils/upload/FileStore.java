@@ -34,7 +34,15 @@ public class FileStore {
     }
 
     //단일 upload 처리
-    public UploadFile storeFile(MultipartFile multipartFile, String savePath, String whiteList) throws IOException {
+    public UploadFile
+
+
+
+
+
+
+
+    storeFile(MultipartFile multipartFile, String savePath, String whiteList) throws IOException {
 
         int max = 10; //최대사이즈 : 10MB;
 
@@ -58,6 +66,9 @@ public class FileStore {
 
             boolean sizeOver = multipartFile.getSize() > size * 1024 * 1024;
             boolean badType = !_typeOk(whiteList, originalFilename);
+            if ("all".equals(whiteList)) {
+                badType = false;
+            }
             boolean noFileName = multipartFile == null || StrUtil.isEmpty(originName);
 
             UploadFile up = new UploadFile();

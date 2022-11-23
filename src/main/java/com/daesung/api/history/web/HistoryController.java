@@ -189,8 +189,6 @@ public class HistoryController {
                                               @PathVariable(name = "lang", required = true) String lang,
                                               @CurrentUser Account account) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (errors.hasErrors()) {
             return ResponseEntity.badRequest().body(errors);
         }
@@ -199,15 +197,9 @@ public class HistoryController {
         String dtoHdYear = detailDto.getHdYear();
         History searchHistory = historyRepository.searchHistoryBetween(dtoHdYear);
 
-        /**
-         *  빈 seq 는 insert , 빈 seq 아닐시 아래로 +1
-         */
         HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
         if (detailSequenceCheck != null) {
-            List<HistoryDetail> sequenceEqYear = historyDetailRepository.findByHdSequenceEqYearPlus(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
-            for (HistoryDetail historyDetail : sequenceEqYear) {
-                historyDetail.plusSequence();
-            }
+            return ResponseEntity.badRequest().body(new ErrorResponse("순서가 동일한 연혁 상세가 있습니다. 순서를 변경하세요.","400"));
         }
 
         HistoryDetail historyDetail = HistoryDetail.builder()
@@ -244,27 +236,12 @@ public class HistoryController {
 
         HistoryDetail getDetail = optionalHistoryDetail.get();
 
-        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence());
-        if (detailSequenceCheck != null) {
-            if (getDetail.getHdYear().equals(detailDto.getHdYear()) && getDetail.getHdMonth().equals(detailDto.getHdMonth())) {
-                if (detailDto.getHdSequence() > getDetail.getHdSequence()) {
-                    List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceLtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
-                    for (HistoryDetail historyDetail : sequenceLtInputSeq) {
-                        historyDetail.minusSequence();
-                    }
-                }
+//        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence());
+//        if (detailSequenceCheck != null) {
+//            return ResponseEntity.badRequest().body(new ErrorResponse("순서가 동일한 연혁 상세가 있습니다. 순서를 변경하세요.","400"));
+//        }
 
-                if (detailDto.getHdSequence() < getDetail.getHdSequence()) {
-                    List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceGtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
-                    for (HistoryDetail historyDetail : sequenceLtInputSeq) {
-                        historyDetail.plusSequence();
-                    }
-                }
-            }
-        }
-
-
-        getDetail.setHdSequence(detailDto.getHdSequence());
+        getDetail.updateDetail(detailDto);
 
         HistoryDetail updatedDetail = historyDetailRepository.save(getDetail);
 
@@ -285,16 +262,127 @@ public class HistoryController {
         }
         HistoryDetail historyDetail = optionalHistoryDetail.get();
 
-        List<HistoryDetail> historyDetails = historyDetailRepository.findByHdSequenceEqYearMinus(historyDetail.getHdYear(), historyDetail.getHdMonth(), historyDetail.getHdSequence());
-
-        for (HistoryDetail detail : historyDetails) {
-            detail.minusSequence();
-        }
-
         historyDetailRepository.deleteById(id);
 
-        return ResponseEntity.ok(id+"번 연혁 상세정보 삭제 성공");
+        return ResponseEntity.status(HttpStatus.OK).body(id+"번 연혁 상세정보 삭제 성공");
     }
+
+
+// /**
+//     * 연혁상세 등록
+//     */
+//    @PostMapping(value = "/detail", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+//    public ResponseEntity historyDetailInsert(@RequestBody @Valid HistoryDetailDto detailDto,
+//                                              Errors errors,
+//                                              @PathVariable(name = "lang", required = true) String lang,
+//                                              @CurrentUser Account account) {
+//
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//
+//        if (errors.hasErrors()) {
+//            return ResponseEntity.badRequest().body(errors);
+//        }
+//
+//        //해당 날짜에 맞는 history 등록
+//        String dtoHdYear = detailDto.getHdYear();
+//        History searchHistory = historyRepository.searchHistoryBetween(dtoHdYear);
+//
+//        /**
+//         *  빈 seq 는 insert , 빈 seq 아닐시 아래로 +1
+//         */
+//        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
+//        if (detailSequenceCheck != null) {
+//            List<HistoryDetail> sequenceEqYear = historyDetailRepository.findByHdSequenceEqYearPlus(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
+//            for (HistoryDetail historyDetail : sequenceEqYear) {
+//                historyDetail.plusSequence();
+//            }
+//        }
+//
+//        HistoryDetail historyDetail = HistoryDetail.builder()
+//                .hdYear(detailDto.getHdYear())
+//                .hdMonth(detailDto.getHdMonth())
+//                .content(detailDto.getContent())
+//                .hdSequence(detailDto.getHdSequence())
+//                .history(searchHistory)
+//                .language(lang)
+//                .build();
+//
+//        HistoryDetail savedDetail = historyDetailRepository.save(historyDetail);
+//
+//        return ResponseEntity.ok(new HistoryDetailResource(savedDetail));
+//    }
+//
+//    /**
+//     * 연혁상세 단건 수정
+//     */
+//    @PutMapping(value = "/detail/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+//    public ResponseEntity historyDetailUpdate(@RequestBody @Valid HistoryDetailDto detailDto,
+//                                              Errors errors,
+//                                              @PathVariable(name = "id") Long id,
+//                                              @PathVariable(name = "lang", required = true) String lang) {
+//
+//        if (errors.hasErrors()) {
+//            return ResponseEntity.badRequest().body(errors);
+//        }
+//
+//        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+//        if (!optionalHistoryDetail.isPresent()) {
+//            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+//        }
+//
+//        HistoryDetail getDetail = optionalHistoryDetail.get();
+//
+//        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence());
+//        if (detailSequenceCheck != null) {
+//            if (getDetail.getHdYear().equals(detailDto.getHdYear()) && getDetail.getHdMonth().equals(detailDto.getHdMonth())) {
+//                if (detailDto.getHdSequence() > getDetail.getHdSequence()) {
+//                    List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceLtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
+//                    for (HistoryDetail historyDetail : sequenceLtInputSeq) {
+//                        historyDetail.minusSequence();
+//                    }
+//                }
+//
+//                if (detailDto.getHdSequence() < getDetail.getHdSequence()) {
+//                    List<HistoryDetail> sequenceLtInputSeq = historyDetailRepository.findByHdSequenceGtInputSeq(getDetail.getHdYear(), getDetail.getHdMonth(), detailDto.getHdSequence(), getDetail.getHdSequence());
+//                    for (HistoryDetail historyDetail : sequenceLtInputSeq) {
+//                        historyDetail.plusSequence();
+//                    }
+//                }
+//            }
+//        }
+//
+//
+//        getDetail.setHdSequence(detailDto.getHdSequence());
+//
+//        HistoryDetail updatedDetail = historyDetailRepository.save(getDetail);
+//
+//        return ResponseEntity.ok(new HistoryDetailResource(updatedDetail));
+
+//    }
+//
+//    /**
+//     * 연혁상세 단건 삭제
+//     */
+//    @DeleteMapping(value = "/detail/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
+//    public ResponseEntity historyDetailDelete(@PathVariable(name = "id", required = false) Long id,
+//                                              @PathVariable(name = "lang", required = true) String lang){
+//
+//        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+//        if (!optionalHistoryDetail.isPresent()) {
+//            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+//        }
+//        HistoryDetail historyDetail = optionalHistoryDetail.get();
+//
+//        List<HistoryDetail> historyDetails = historyDetailRepository.findByHdSequenceEqYearMinus(historyDetail.getHdYear(), historyDetail.getHdMonth(), historyDetail.getHdSequence());
+//
+//        for (HistoryDetail detail : historyDetails) {
+//            detail.minusSequence();
+//        }
+//
+//        historyDetailRepository.deleteById(id);
+//
+//        return ResponseEntity.ok(id+"번 연혁 상세정보 삭제 성공");
+//    }
 
     /**
      * @param hitoryId 연혁 ID

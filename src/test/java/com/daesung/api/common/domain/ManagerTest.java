@@ -22,6 +22,20 @@ class ManagerTest extends BaseControllerTest {
 
         BusinessField businessField01 = businessFieldRepository.findById(19L).get();
 
+//        Manager manager01 = Manager.builder()
+//                .mnNum("1105")
+//                .mnName("김상수")
+////                .mnCategory(MnCategory.DS_RELAY)
+//                .mnCategory("윤리경영신고")
+//                .mnDepartment("감사실")
+//                .mnPosition("대리")
+//                .mnPhone("010-2222-3333")
+//                .mnEmail("aaa@email.com")
+//                .businessField(businessField01)
+//                .build();
+//
+//        managerRepository.save(manager01);
+
         Manager manager01 = Manager.builder()
                 .mnNum("1105")
                 .mnName("김상수")
@@ -35,6 +49,7 @@ class ManagerTest extends BaseControllerTest {
                 .build();
 
         managerRepository.save(manager01);
+
     }
 
     @DisplayName("dummay data insert")

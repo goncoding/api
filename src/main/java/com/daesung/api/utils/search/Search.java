@@ -2,16 +2,16 @@ package com.daesung.api.utils.search;
 
 
 import com.daesung.api.history.domain.enumType.HrCategory;
+import com.daesung.api.ir.domain.enumType.IrType;
 import com.daesung.api.utils.StrUtil;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
 @ToString
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Search {
     Long id;
     String searchType;
@@ -23,8 +23,16 @@ public class Search {
 
     private String searchTitle;
 
-    //연혁 히스테리 기록 //        NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
+
+    /**
+     * 연혁 히스테리 기록 : NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
+     */
     private HrCategory hrCategory;
+
+    /**
+     * IR 자료관리 :  MP("경영실적"), AR("감사보고서"),BR("사업보고서");
+     */
+    private IrType irType;
 
     private String recordType;
 

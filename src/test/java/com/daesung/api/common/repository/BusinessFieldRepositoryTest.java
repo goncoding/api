@@ -24,10 +24,19 @@ class BusinessFieldRepositoryTest extends BaseControllerTest {
     @Test
     @Commit
     public void _테스트_insert() throws Exception{
+//
+//        Business business = businessRepository.findById(7L).get();
+//        BusinessField businessField01 = BusinessField.builder()
+//                .busFieldName("윤리경영신고")
+//                .busFieldInfo("정보 윤리경영신고")
+//                .business(business)
+//                .build();
+//
+//        businessFieldRepository.save(businessField01);
 
-        Business business = businessRepository.findById(7L).get();
+      Business business = businessRepository.findById(8L).get();
         BusinessField businessField01 = BusinessField.builder()
-                .busFieldName("윤리경영신고")
+                .busFieldName("재무")
                 .busFieldInfo("정보 윤리경영신고")
                 .business(business)
                 .build();

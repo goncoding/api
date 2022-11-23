@@ -22,8 +22,8 @@ class BusinessRepositoryTest extends BaseControllerTest {
     public void _테스트2() throws Exception{
 
         Business business01 = Business.builder()
-                .businessName("감사실")
-                .businessInfo("정보 감사실")
+                .businessName("재무IR기획부")
+                .businessInfo("정보 재무IR기획부")
                 .build();
 
         businessRepository.save(business01);
