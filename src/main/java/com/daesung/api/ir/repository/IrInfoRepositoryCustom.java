@@ -8,5 +8,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface IrInfoRepositoryCustom {
 
-    Page<IrInfo> searchIrInfoRepository(Search search, Pageable pageable);
+    Page<IrInfo> searchIrInfoList(Search search, Pageable pageable);
 }

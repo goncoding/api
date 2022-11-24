@@ -97,7 +97,7 @@ public class EthicalReportController {
 
         Optional<EthicalReport> optionalEthicalReport = ethicalReportRepository.findById(id);
         if (!optionalEthicalReport.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 윤리경영신고 문의가 없습니다.", "404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 윤리경영신고 문의가 없습니다. id를 확인해주세요.", "400"));
         }
         EthicalReport ethicalReport = optionalEthicalReport.get();
 

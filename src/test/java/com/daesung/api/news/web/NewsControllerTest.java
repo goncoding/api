@@ -60,9 +60,6 @@ class NewsControllerTest extends BaseControllerTest {
                 .andExpect(status().isCreated())
         ;
 
-
-
-
     }
 
     @DisplayName("reposrt insert")

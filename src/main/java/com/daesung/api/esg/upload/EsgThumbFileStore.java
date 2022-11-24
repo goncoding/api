@@ -1,7 +1,8 @@
-package com.daesung.api.news;
+package com.daesung.api.esg.upload;
 
 
-import com.daesung.api.news.domain.NewsFile;
+import com.daesung.api.esg.domain.Esg;
+import com.daesung.api.esg.repository.EsgRepository;
 import com.daesung.api.news.domain.NewsThumbnailFile;
 import com.daesung.api.news.repository.NewsFileRepository;
 import com.daesung.api.news.repository.NewsThumbnailFileRepository;
@@ -15,21 +16,16 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
-public class NewsFileStore {
+public class EsgThumbFileStore {
 
     @Value("${file.dir}")
     private String fileDir;
 
-    private final NewsFileRepository newsFileRepository;
-    private final NewsThumbnailFileRepository newsThumbnailFileRepository;
-
+    private final EsgRepository esgRepository;
 
     int size = 10;
 
@@ -76,16 +72,13 @@ public class NewsFileStore {
             if (sizeOver) return up.setSizeOver(true);
             if (badType) return up.setWrongType(true);
 
-            List<NewsFile> newsFileList = newsFileRepository.findByNewsId(id);
-            for (NewsFile newsFile : newsFileList) {
-                String fileSavedPath = newsFile.getNewsFileSavedPath() + "/" + newsFile.getNewsFileSavedName();
+            Esg esg = esgRepository.findById(id).get();
+            String fileSavedPath = esg.getEsgFileSavedPath() + "/" + esg.getEsgFileSavedName();
 
-                File file = new File(fileSavedPath);
-                if (file.exists()) {
-                    file.delete();
-                }
+            File file = new File(fileSavedPath);
+            if (file.exists()) {
+                file.delete();
             }
-            newsFileRepository.deleteByNewsId(id);
 
             //coffee01.png
             String ext = originName.substring(originName.lastIndexOf('.'));

@@ -1,6 +1,7 @@
-package com.daesung.api.news;
+package com.daesung.api.news.upload;
 
 
+import com.daesung.api.news.domain.NewsFile;
 import com.daesung.api.news.domain.NewsThumbnailFile;
 import com.daesung.api.news.repository.NewsFileRepository;
 import com.daesung.api.news.repository.NewsThumbnailFileRepository;
@@ -21,7 +22,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class NewsThumbFileStore {
+public class NewsFileStore {
 
     @Value("${file.dir}")
     private String fileDir;
@@ -75,18 +76,16 @@ public class NewsThumbFileStore {
             if (sizeOver) return up.setSizeOver(true);
             if (badType) return up.setWrongType(true);
 
-
-            List<NewsThumbnailFile> thumbnailFiles = newsThumbnailFileRepository.findByNewsId(id);
-            for (NewsThumbnailFile thumbnailFile : thumbnailFiles) {
-                String fileSavedPath = thumbnailFile.getThumbnailFileSavedPath() + "/" + thumbnailFile.getThumbnailFileSavedName();
+            List<NewsFile> newsFileList = newsFileRepository.findByNewsId(id);
+            for (NewsFile newsFile : newsFileList) {
+                String fileSavedPath = newsFile.getNewsFileSavedPath() + "/" + newsFile.getNewsFileSavedName();
 
                 File file = new File(fileSavedPath);
                 if (file.exists()) {
                     file.delete();
                 }
             }
-
-            newsThumbnailFileRepository.deleteByNewsId(id);
+            newsFileRepository.deleteByNewsId(id);
 
             //coffee01.png
             String ext = originName.substring(originName.lastIndexOf('.'));

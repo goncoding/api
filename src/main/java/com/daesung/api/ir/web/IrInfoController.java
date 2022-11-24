@@ -34,14 +34,14 @@ import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{lang}/ir")
+@RequestMapping("/{lang}/ir-info")
 public class IrInfoController {
 
 
     @Value("${file.dir}")
     private String fileDir;
 
-    String savePath = "/irInfo";
+    String savePath = "/ir_info";
 
     String whiteList = "all"; //모든 파일 통과
 
@@ -83,7 +83,7 @@ public class IrInfoController {
             search.setIrType(IrType.BR);
         }
 
-        Page<IrInfo> irInfos = irInfoRepository.searchIrInfoRepository(search, pageable);
+        Page<IrInfo> irInfos = irInfoRepository.searchIrInfoList(search, pageable);
 
         PagedModel<IrInfoListResource> irInfoListResources = assembler.toModel(irInfos, i -> new IrInfoListResource(i));
 
@@ -142,7 +142,7 @@ public class IrInfoController {
                 return ResponseEntity.ok(savedIrInfo);
 
             } catch (IOException e) {
-                return ResponseEntity.ok(new ErrorResponse(e.getMessage(),"500 (IOException)"));
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
 
         } else {
@@ -158,7 +158,7 @@ public class IrInfoController {
 
         Optional<IrInfo> optionalIrInfo = irInfoRepository.findById(id);
         if (!optionalIrInfo.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 자료관리 정보가 없습니다. id를 확인해주세요.","404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 자료관리 정보가 없습니다. id를 확인해주세요.","400"));
         }
 
         IrInfo irInfo = optionalIrInfo.get();

@@ -92,7 +92,9 @@ public class HistoryController {
     /**
      * 연혁 단건 수정
      */
-    @PostMapping(value = "/modify/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
+    @PostMapping(value = "/modify/{id}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
+            produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity historyUpdate(
             @PathVariable Long id,
             @RequestPart(name = "requestDto") @Valid HistorytDto requestDto,
@@ -123,7 +125,7 @@ public class HistoryController {
                 history.changeFileInfo(uploadFile);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 

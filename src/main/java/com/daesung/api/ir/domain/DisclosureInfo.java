@@ -14,7 +14,7 @@ import javax.persistence.*;
 @ToString
 @Builder
 @Table(name = "ds_disclosure_Info")
-public class DisClosureInfo extends RegTimeEntity {
+public class DisclosureInfo extends RegTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

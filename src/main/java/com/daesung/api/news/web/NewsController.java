@@ -2,8 +2,8 @@ package com.daesung.api.news.web;
 
 import com.daesung.api.common.error.ErrorResource;
 import com.daesung.api.common.response.ErrorResponse;
-import com.daesung.api.news.NewsFileStore;
-import com.daesung.api.news.NewsThumbFileStore;
+import com.daesung.api.news.upload.NewsFileStore;
+import com.daesung.api.news.upload.NewsThumbFileStore;
 import com.daesung.api.news.domain.News;
 import com.daesung.api.news.domain.NewsFile;
 import com.daesung.api.news.domain.NewsThumbnailFile;
@@ -171,7 +171,7 @@ public class NewsController {
                     newsThumbnailFileRepository.save(newsThumbnailFile);
 
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
                 }
             }
 
@@ -198,7 +198,7 @@ public class NewsController {
                     }
 
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
                 }
             }
 
@@ -256,7 +256,7 @@ public class NewsController {
         } else {
             Optional<News> optionalNews = newsRepository.findById(id);
             if (!optionalNews.isPresent()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.","404"));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.","400"));
             }
             news = optionalNews.get();
         }
@@ -347,7 +347,7 @@ public class NewsController {
                     newsThumbnailFileRepository.save(newsThumbnailFile);
 
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
                 }
             }
 
@@ -382,7 +382,7 @@ public class NewsController {
                     }
 
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
                 }
             }
 
@@ -396,7 +396,7 @@ public class NewsController {
         if ("RE".equals(newsDto.getNbType())) {
 
             if (thumbnailFile != null || newsFiles != null) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("파일업로드는 뉴스만 가능합니다.","404"));
+                return ResponseEntity.badRequest().body(new ErrorResponse("파일업로드는 뉴스만 가능합니다.","400"));
             }
 
             news.setTitle(newsDto.getTitle());

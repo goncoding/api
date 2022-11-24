@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface IrInfoRepository extends JpaRepository<IrInfo, Long>, IrInfoRepositoryCustom{
 
-    Page<IrInfo> searchIrInfoRepository(Search search, Pageable pageable);
+    Page<IrInfo> searchIrInfoList(Search search, Pageable pageable);
 
 }

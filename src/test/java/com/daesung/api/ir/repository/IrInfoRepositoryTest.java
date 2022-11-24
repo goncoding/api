@@ -25,7 +25,7 @@ class IrInfoRepositoryTest extends BaseControllerTest {
 
         PageRequest pageRequest = PageRequest.of(0, 5);
 
-        Page<IrInfo> irInfos = irInfoRepository.searchIrInfoRepository(search, pageRequest);
+        Page<IrInfo> irInfos = irInfoRepository.searchIrInfoList(search, pageRequest);
 
         for (IrInfo irInfo : irInfos) {
             System.out.println("irInfo = " + irInfo);

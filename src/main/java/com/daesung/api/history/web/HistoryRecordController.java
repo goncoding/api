@@ -135,7 +135,7 @@ public class HistoryRecordController {
 
         Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
         if (!optionalHistoryRecord.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
         }
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();
@@ -173,7 +173,7 @@ public class HistoryRecordController {
 
         Optional<HistoryRecordFile> optionalRecordFile = historyRecordFileRepository.findById(hrId);
         if (!optionalRecordFile.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 파일 정보가 없습니다. 파일 id를 확인해주세요.","404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 파일 정보가 없습니다. 파일 id를 확인해주세요.","400"));
         }
         HistoryRecordFile recordFile = optionalRecordFile.get();
 
@@ -190,7 +190,7 @@ public class HistoryRecordController {
 
         Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
         if (!optionalHistoryRecord.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
         }
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();
@@ -256,7 +256,7 @@ public class HistoryRecordController {
                 historyRecordFileRepository.save(recordFile);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -279,7 +279,7 @@ public class HistoryRecordController {
                 historyRecordFileRepository.save(recordFile);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -302,7 +302,7 @@ public class HistoryRecordController {
                 historyRecordFileRepository.save(recordFile);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -325,7 +325,7 @@ public class HistoryRecordController {
                 historyRecordFileRepository.save(recordFile);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -348,7 +348,7 @@ public class HistoryRecordController {
                 historyRecordFileRepository.save(recordFile);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -379,7 +379,7 @@ public class HistoryRecordController {
 
         Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
         if (!optionalHistoryRecord.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
         }
 
         if (errors.hasErrors()) {
@@ -395,7 +395,7 @@ public class HistoryRecordController {
         HrCategory enumCategory = getEnumCategory(recordDto);
         String description = enumCategory.getDescription();
         if (enumCategory == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("히스토리 카테고리가 null입니다.", "404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("히스토리 카테고리는 필수입니다.", "400"));
         }
 
         historyRecord.updateRecord(recordDto, historyRecord, content, enumCategory, description);
@@ -428,7 +428,7 @@ public class HistoryRecordController {
                 recordFileList.add(savedFile01);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -437,7 +437,7 @@ public class HistoryRecordController {
 
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "02");
                 if (fileOptional.isPresent()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("2번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                    return ResponseEntity.badRequest().body(new ErrorResponse("2번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile02, savePath, whiteList);
@@ -457,7 +457,7 @@ public class HistoryRecordController {
                 recordFileList.add(savedFile02);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -465,7 +465,7 @@ public class HistoryRecordController {
             try {
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "03");
                 if (fileOptional.isPresent()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("3번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                    return ResponseEntity.badRequest().body(new ErrorResponse("3번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile03, savePath, whiteList);
@@ -485,7 +485,7 @@ public class HistoryRecordController {
                 recordFileList.add(savedFile03);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -493,7 +493,7 @@ public class HistoryRecordController {
             try {
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "04");
                 if (fileOptional.isPresent()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("4번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                    return ResponseEntity.badRequest().body(new ErrorResponse("4번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile04, savePath, whiteList);
@@ -513,7 +513,7 @@ public class HistoryRecordController {
                 recordFileList.add(savedFile04);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -521,7 +521,7 @@ public class HistoryRecordController {
             try {
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "05");
                 if (fileOptional.isPresent()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("5번 첨부파일이 존재합니다. 삭제 후 진행하세요.","404"));
+                    return ResponseEntity.badRequest().body(new ErrorResponse("5번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile05, savePath, whiteList);
@@ -541,7 +541,7 @@ public class HistoryRecordController {
                 recordFileList.add(savedFile05);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         }
 
@@ -588,7 +588,7 @@ public class HistoryRecordController {
 
         Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
         if (!optionalHistoryRecord.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","404"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
         }
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();

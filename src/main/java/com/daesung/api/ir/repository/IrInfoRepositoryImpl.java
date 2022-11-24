@@ -27,7 +27,7 @@ public class IrInfoRepositoryImpl implements IrInfoRepositoryCustom{
 
 
     @Override
-    public Page<IrInfo> searchIrInfoRepository(Search search, Pageable pageable) {
+    public Page<IrInfo> searchIrInfoList(Search search, Pageable pageable) {
 
         QueryResults<IrInfo> results = queryFactory
                 .select(irInfo)
