@@ -19,6 +19,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
+import static com.daesung.api.utils.upload.UploadUtil.UPLOAD_PATH;
+
 @Component
 @RequiredArgsConstructor
 public class NewsThumbFileStore {
@@ -32,17 +34,6 @@ public class NewsThumbFileStore {
 
     int size = 10;
 
-    //다중 upload 처리
-    public List<UploadFile> storeFileList(List<MultipartFile> multipartFiles, String savePath, String whiteList, Long id) throws IOException {
-        List<UploadFile> storeFileResult = new ArrayList<>();
-        for (MultipartFile multipartFile : multipartFiles) {
-            if (!multipartFile.isEmpty()) {
-                storeFileResult.add(storeFile(multipartFile, savePath, whiteList,id));
-            }
-        }
-        return storeFileResult;
-    }
-
     //단일 upload 처리
     public UploadFile storeFile(MultipartFile multipartFile, String savePath, String whiteList, Long id) throws IOException {
 
@@ -54,7 +45,8 @@ public class NewsThumbFileStore {
 
         if (multipartFile != null && multipartFile.getSize() > 0 && !StrUtil.isEmpty(multipartFile.getName())) {
 
-            String dir = fileDir + savePath + "/" + strToday;
+            String filePath = savePath + "/" + strToday;
+            String dir = fileDir + UPLOAD_PATH + filePath;
 
 //            String whiteList = "jpg, png, gif, hwp, pdf, ppt, pptx, xls, xlsx, zip, doc";
 
@@ -78,7 +70,7 @@ public class NewsThumbFileStore {
 
             List<NewsThumbnailFile> thumbnailFiles = newsThumbnailFileRepository.findByNewsId(id);
             for (NewsThumbnailFile thumbnailFile : thumbnailFiles) {
-                String fileSavedPath = thumbnailFile.getThumbnailFileSavedPath() + "/" + thumbnailFile.getThumbnailFileSavedName();
+                String fileSavedPath = fileDir + thumbnailFile.getThumbnailFileSavedPath() + "/" + thumbnailFile.getThumbnailFileSavedName();
 
                 File file = new File(fileSavedPath);
                 if (file.exists()) {
@@ -101,7 +93,7 @@ public class NewsThumbFileStore {
             multipartFile.transferTo(upFile);
             return up.setNewName(newFileName)
                     .setOriginName(originName)
-                    .setRealPath(String.format("%s", dir));
+                    .setRealPath(String.format("%s%s", UPLOAD_PATH, filePath));
 
         }
 

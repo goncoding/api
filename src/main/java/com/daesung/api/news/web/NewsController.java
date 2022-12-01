@@ -17,6 +17,7 @@ import com.daesung.api.news.resource.NewsResource;
 import com.daesung.api.news.validation.NewsValidation;
 import com.daesung.api.news.web.dto.NewsDto;
 import com.daesung.api.news.web.dto.NewsGetResponseDto;
+import com.daesung.api.news.web.dto.NewsInsertResponse;
 import com.daesung.api.utils.image.AccessLogUtil;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.NasFileComponent;
@@ -38,14 +39,17 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,7 +101,7 @@ public class NewsController {
         if ("tit".equals(searchType)) {
             searchCondition.setSearchTitle(searchText);
         }
-        if ("titCont".equals(searchText)) {
+        if ("cont".equals(searchType)) {
             searchCondition.setSearchText(searchText);
         }
         if ("NE".equals(nbType)) {
@@ -145,6 +149,7 @@ public class NewsController {
                     .title(newsDto.getTitle())
                     .content(content)
                     .viewCnt(newsDto.getViewCnt())
+                    .selectRegDate(newsDto.getSelectRegDate())
                     .language(lang)
                     .build();
 
@@ -154,6 +159,7 @@ public class NewsController {
             //뉴스 섬네일 업로드
             if (thumbnailFile != null) {
                 try {
+
                     UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
 
                     if (uploadFile.isWrongType()) {
@@ -202,8 +208,10 @@ public class NewsController {
                 }
             }
 
+
             URI uri = linkTo(NewsController.class, newsDto.getLanguage()).slash(savedNews.getId()).toUri();
             NewsResource newsResource = new NewsResource(savedNews);
+
 
             return ResponseEntity.created(uri).body(newsResource);
 
@@ -211,17 +219,52 @@ public class NewsController {
 
         //보도
         if ("RE".equals(newsDto.getNbType())) {
+
+            if (newsFiles != null) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("첨부파일은 뉴스만 가능합니다.","400"));
+            }
+
+
             News news = News.builder()
                     .nbType(NbType.RE)
                     .title(newsDto.getTitle())
                     .newCompany(newsDto.getNewCompany())
                     .link(newsDto.getLink())
                     .viewCnt(newsDto.getViewCnt())
+                    .selectRegDate(newsDto.getSelectRegDate())
                     .language(lang)
                     .build();
 
             News savedNews = newsRepository.save(news);
             System.out.println("savedNews = " + savedNews);
+
+            //뉴스 섬네일 업로드
+            if (thumbnailFile != null) {
+                try {
+
+                    UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
+
+                    if (uploadFile.isWrongType()) {
+                        return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                    }
+
+                    NewsThumbnailFile newsThumbnailFile = NewsThumbnailFile.builder()
+                            .news(savedNews)
+                            .thumbnailFileOriginalName(uploadFile.getOriginName())
+                            .thumbnailFileSavedName(uploadFile.getNewName())
+                            .thumbnailFileSavedPath(uploadFile.getRealPath())
+                            .thumbnailFileSummary(newsDto.getThumbSummary())
+                            .build();
+
+                    newsThumbnailFileRepository.save(newsThumbnailFile);
+
+                } catch (IOException e) {
+                    return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
+                }
+            }
+
+
+
 
             URI uri = linkTo(NewsController.class, newsDto.getLanguage()).slash(savedNews.getId()).toUri();
             NewsResource newsResource = new NewsResource(savedNews);
@@ -236,14 +279,33 @@ public class NewsController {
      * news 단건 조회
      */
     @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
-    public ResponseEntity getNews(
-            @PathVariable("id") Long id,
-            @PathVariable(name = "lang", required = true) String lang,
-            @RequestParam(name = "searchType", required = false, defaultValue = "") String searchType,
-            @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
-            @RequestParam(name = "nbType", required = false, defaultValue = "") String nbType,
-             HttpServletRequest request,
-             HttpSession session) throws Exception {
+    public ResponseEntity getNews(@PathVariable("id") Long id,
+                                  @PathVariable(name = "lang", required = true) String lang,
+                                  Pageable pageable,
+                                  @RequestParam(name = "searchType", required = false, defaultValue = "") String searchType,
+                                  @RequestParam(name = "searchText", required = false, defaultValue = "") String searchText,
+                                  @RequestParam(name = "nbType", required = false, defaultValue = "") String nbType,
+                                  HttpServletRequest request,
+                                  HttpSession session) throws Exception {
+
+        //타입 검색 값 넣기
+        NewsSearchCondition searchCondition = new NewsSearchCondition();
+
+        if ("tit".equals(searchType)) {
+            searchCondition.setSearchTitle(searchText);
+        }
+        if ("cont".equals(searchType)) {
+            searchCondition.setSearchText(searchText);
+        }
+        if ("NE".equals(nbType)) {
+            searchCondition.setNbType(NbType.NE);
+        }
+        if ("RE".equals(nbType)) {
+            searchCondition.setNbType(NbType.RE);
+        }
+
+        News prevNews = newsRepository.searchPrevNews(id, searchCondition);
+        News nextNews = newsRepository.searchNextNews(id, searchCondition);
 
         AccessLogUtil.fileViewAccessLog(request);
 
@@ -274,10 +336,13 @@ public class NewsController {
 
         List<NewsThumbnailFile> thumbnailFileList = newsThumbnailFileRepository.findByNewsId(id);
 
+
         NewsGetResponseDto responseDto = NewsGetResponseDto.builder()
                 .news(news)
                 .newsThumbnailFile(thumbnailFile)
                 .newsImgList(newsImgList)
+                .prevNews(prevNews)
+                .nextNews(nextNews)
                 .build();
 
         return ResponseEntity.ok(responseDto);
@@ -318,6 +383,7 @@ public class NewsController {
 
             news.setTitle(newsDto.getTitle());
             news.setContent(newsDto.getContent());
+            news.setSelectRegDate(newsDto.getSelectRegDate());
 
             News savedNews = newsRepository.save(news);
 
@@ -326,11 +392,6 @@ public class NewsController {
             //뉴스 섬네일 업로드
             if (thumbnailFile != null) {
                 try {
-                    //todo 기존거 조회해 와서 삭제... 파일 오류시에 먼저 삭제된다...
-                    List<NewsThumbnailFile> thumbnailFiles = newsThumbnailFileRepository.findByNewsId(id);
-                    for (NewsThumbnailFile file : thumbnailFiles) {
-                        deleteFile(file);
-                    }
 
                     UploadFile uploadFile = newsThumbFileStore.storeFile(thumbnailFile, savePath, thumbWhiteList, id);
                     if (uploadFile.isWrongType()) {
@@ -395,18 +456,42 @@ public class NewsController {
         //보도
         if ("RE".equals(newsDto.getNbType())) {
 
-            if (thumbnailFile != null || newsFiles != null) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("파일업로드는 뉴스만 가능합니다.","400"));
+            if (newsFiles != null) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("첨부파일은 뉴스만 가능합니다.","400"));
             }
+
 
             news.setTitle(newsDto.getTitle());
             news.setNewCompany(newsDto.getNewCompany());
             news.setLink(newsDto.getLink());
+            news.setSelectRegDate(newsDto.getSelectRegDate());
 
             News savedNews = newsRepository.save(news);
 
             System.out.println("savedNews = " + savedNews);
-            System.out.println("savedNews = " + savedNews);
+
+            //보도 섬네일 업로드
+            if (thumbnailFile != null) {
+                try {
+
+                    UploadFile uploadFile = newsThumbFileStore.storeFile(thumbnailFile, savePath, thumbWhiteList, id);
+                    if (uploadFile.isWrongType()) {
+                        return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                    }
+
+                    NewsThumbnailFile newsThumbnailFile = NewsThumbnailFile.builder()
+                            .news(savedNews)
+                            .thumbnailFileOriginalName(uploadFile.getOriginName())
+                            .thumbnailFileSavedName(uploadFile.getNewName())
+                            .thumbnailFileSavedPath(uploadFile.getRealPath())
+                            .build();
+
+                    newsThumbnailFileRepository.save(newsThumbnailFile);
+
+                } catch (IOException e) {
+                    return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
+                }
+            }
 
             URI uri = linkTo(NewsController.class, newsDto.getLanguage()).slash(savedNews.getId()).toUri();
             NewsResource newsResource = new NewsResource(savedNews);
@@ -419,8 +504,8 @@ public class NewsController {
 
     }
 
-    private static void deleteFile(NewsThumbnailFile savedThumbFile) {
-        String fileSavedPath = savedThumbFile.getThumbnailFileSavedPath() + "/" + savedThumbFile.getThumbnailFileSavedName();
+    public void deleteFile(NewsThumbnailFile savedThumbFile) {
+        String fileSavedPath = fileDir + savedThumbFile.getThumbnailFileSavedPath() + "/" + savedThumbFile.getThumbnailFileSavedName();
 
         File file = new File(fileSavedPath);
         if (file.exists()) {
@@ -440,7 +525,7 @@ public class NewsController {
         List<NewsThumbnailFile> byNewsId = newsThumbnailFileRepository.findByNewsId(id);
         for (NewsThumbnailFile thumbnailFile : byNewsId) {
 
-            String thumbnailFileSavedPath = thumbnailFile.getThumbnailFileSavedPath();
+            String thumbnailFileSavedPath = fileDir + thumbnailFile.getThumbnailFileSavedPath() + "/" + thumbnailFile.getThumbnailFileSavedName();
 
             File file = new File(thumbnailFileSavedPath);
             if (file.exists()) {
@@ -452,7 +537,7 @@ public class NewsController {
         List<NewsFile> newsFiles = newsFileRepository.findByNewsId(id);
         for (NewsFile newsFile : newsFiles) {
 
-            String newsFileSavedPath = newsFile.getNewsFileSavedPath();
+            String newsFileSavedPath = fileDir + newsFile.getNewsFileSavedPath() + "/" + newsFile.getNewsFileSavedName();
 
             File file = new File(newsFileSavedPath);
             if (file.exists()) {

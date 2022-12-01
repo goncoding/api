@@ -49,6 +49,44 @@ public class NewsRepositoryImpl implements NewsRepositoryCustom{
         return new PageImpl<>(content, pageable, total);
     }
 
+    @Override
+    public News searchPrevNews(Long id, NewsSearchCondition condition) {
+
+        News prevNews = queryFactory
+                .select(news)
+                .from(news)
+                .where(
+                        titleEq(condition.getSearchTitle()),
+                        textEq(condition.getSearchText()),
+                        TypeEq(condition.getNbType()),
+                        news.id.gt(id)
+                )
+                .limit(1)
+                .orderBy(news.id.asc())
+                .fetchOne();
+
+        return prevNews;
+    }
+
+    @Override
+    public News searchNextNews(Long id, NewsSearchCondition condition) {
+
+        News prevNews = queryFactory
+                .select(news)
+                .from(news)
+                .where(
+                        titleEq(condition.getSearchTitle()),
+                        textEq(condition.getSearchText()),
+                        TypeEq(condition.getNbType()),
+                        news.id.lt(id)
+                )
+                .limit(1)
+                .orderBy(news.id.desc())
+                .fetchOne();
+
+        return prevNews;
+    }
+
     /**
      * OrderSpecifier 를 쿼리로 반환하여 정렬조건을 맞춰준다.
      * 리스트 정렬

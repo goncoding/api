@@ -1,14 +1,13 @@
 package com.daesung.api.ethical.domain;
 
+import com.daesung.api.common.domain.enumType.ConsentStatus;
 import com.daesung.api.ethical.domain.enumType.ErCheck;
-import com.daesung.api.ethical.web.dto.EthicalReportDto;
 import com.daesung.api.ethical.web.dto.EthicalReportUpdateDto;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.common.domain.BusinessField;
 import com.daesung.api.common.domain.Manager;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.persistence.*;
 
@@ -40,6 +39,9 @@ public class EthicalReport extends BaseTimeEntity {
     private String erAnswer;
     @Column(columnDefinition = "TEXT")
     private String erMemo;
+
+    @Enumerated(EnumType.STRING)
+    private ConsentStatus consentStatus = ConsentStatus.N;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,7 +1,5 @@
 package com.daesung.api.history.web;
 
-import com.daesung.api.accounts.CurrentUser;
-import com.daesung.api.accounts.domain.Account;
 import com.daesung.api.common.response.ErrorResponse;
 import com.daesung.api.history.domain.History;
 import com.daesung.api.history.domain.HistoryDetail;
@@ -10,8 +8,7 @@ import com.daesung.api.history.repository.HistoryRepository;
 import com.daesung.api.history.resource.HistoryDetailResource;
 import com.daesung.api.history.resource.HistoryListResource;
 import com.daesung.api.history.resource.HistoryResource;
-import com.daesung.api.history.web.dto.HistoryDetailDto;
-import com.daesung.api.history.web.dto.HistorytDto;
+import com.daesung.api.history.web.dto.*;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
@@ -26,22 +23,21 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
 import javax.validation.Valid;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequiredArgsConstructor
@@ -54,9 +50,33 @@ public class HistoryController {
     String savePath = "/history";
     String thumbWhiteList = "jpg, gif, png";
 
+
+
+
     private final FileStore fileStore;
     private final HistoryRepository historyRepository;
     private final HistoryDetailRepository historyDetailRepository;
+
+    /**
+     * 연혁 디테일 content 리스트 조회
+     */
+    @GetMapping(value = "/view/{id}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity getHistoryDetailContentGet(@PathVariable(name = "id") Long id,
+                                                     @PathVariable(name = "lang") String lang) {
+
+
+
+        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+        if (!optionalHistoryDetail.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+        }
+
+        HistoryDetail historyDetail = optionalHistoryDetail.get();
+
+//        historyDetailRepository.findByHdYearAndHdMonthOrderByHdSequence()
+
+        return null;
+    }
 
     /**
      * 연혁 리스트 조회
@@ -68,7 +88,8 @@ public class HistoryController {
                                          @RequestParam(name = "size", required = false, defaultValue = "") String size,
                                          @PathVariable(name = "lang", required = true) String lang) {
 
-        Page<History> historyPage = historyRepository.findAll(pageable);
+        PageRequest request = PageRequest.of(0, 9999);
+        Page<History> historyPage = historyRepository.findAll(request);
         PagedModel<HistoryListResource> pagedModel = assembler.toModel(historyPage, h -> new HistoryListResource(h));
         return ResponseEntity.ok().body(pagedModel);
     }
@@ -85,6 +106,7 @@ public class HistoryController {
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 정보가 없습니다.","400"));
         }
         History history = optionalHistory.get();
+
 
         return ResponseEntity.ok(new HistoryResource(history));
     }
@@ -103,6 +125,7 @@ public class HistoryController {
             Model model,
             @PathVariable(name = "lang", required = true) String lang) {
 
+
         Optional<History> optionalHistory = historyRepository.findById(id);
         if (!optionalHistory.isPresent()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 연혁 정보가 없습니다. 연혁 id를 확인해주세요."));
@@ -115,13 +138,29 @@ public class HistoryController {
         History history = optionalHistory.get();
         history.changeContent(requestDto.getContent());
 
+        int width = 0;
+        int height = 0;
+
         if (thumbnailFile != null) {
             try {
+
+                boolean  extCheck = fileStore._typeOk(thumbWhiteList, thumbnailFile.getOriginalFilename());
+                if (extCheck) {
+                    BufferedImage bufferedImage = ImageIO.read(thumbnailFile.getInputStream());
+
+                    width = bufferedImage.getWidth();
+                    height = bufferedImage.getHeight();
+                }
+
+
                 UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
 
                 if (uploadFile.isWrongType()) {
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
+                
+//                checkImageSize(thumbnailFile);
+
                 history.changeFileInfo(uploadFile);
 
             } catch (IOException e) {
@@ -130,8 +169,28 @@ public class HistoryController {
         }
 
         History updatedHistory = historyRepository.save(history);
-        return ResponseEntity.ok(updatedHistory);
+
+        HistoryUpdateResponse updateResource = HistoryUpdateResponse.builder()
+                .history(updatedHistory)
+                .width(width)
+                .height(height)
+                .build();
+
+        return ResponseEntity.ok(updateResource);
     }
+
+    private void checkImageSize(MultipartFile file) {
+        try {
+            BufferedImage bufferedImage = ImageIO.read(file.getInputStream());
+
+            int width = bufferedImage.getWidth();
+            int height = bufferedImage.getHeight();
+            System.out.println(String.format("width = %d height = %d", width, height));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     /**
      * 연혁상세 리스트 조회
@@ -139,32 +198,27 @@ public class HistoryController {
     @GetMapping(value = "/detail", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyDetailGetList(Pageable pageable,
                                                PagedResourcesAssembler<HistoryDetail> assembler,
-                                               @PathVariable(name = "lang", required = true) String lang,
-                                               @CurrentUser Account account) {
+                                               @PathVariable(name = "lang", required = true) String lang) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         Sort sort = Sort.by("hdYear").descending().and(Sort.by("hdMonth").descending()).and(Sort.by("hdSequence").descending());
-        Pageable pageRequest = PageRequest.of(0, 10, sort);
 
-        Page<HistoryDetail> historyPage = historyDetailRepository.findAll(pageRequest);
+        Page<HistoryDetail> historyPage = historyDetailRepository.findAll(pageable);
 
         PagedModel<HistoryDetailResource> pagedModel = assembler.toModel(historyPage, h -> new HistoryDetailResource(h));
 
         return ResponseEntity.ok().body(pagedModel);
     }
 
+
     /**
      * 연혁상세 단건 조회
      */
     @GetMapping(value = "/detail/{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity historyDetailGet(@PathVariable(name = "id", required = false) Long id,
-                                           @PathVariable(name = "lang", required = true) String lang,
-                                           @CurrentUser Account account){
+                                           @PathVariable(name = "lang", required = true) String lang){
 
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        User principal = (User) authentication.getPrincipal(); //AccountService에서 return 객체가 나옴
-//        principal.getUsername();
 
         Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
         if (!optionalHistoryDetail.isPresent()) {
@@ -174,10 +228,10 @@ public class HistoryController {
 
         HistoryDetailResource historyDetailResource = new HistoryDetailResource(historyDetail);
 
-        if (account != null) {
-            historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage(),account)).withSelfRel());
-            historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage(),account)).withRel("detail-update"));
-        }
+//        if (account != null) {
+//            historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage(),account)).withSelfRel());
+//            historyDetailResource.add(linkTo(methodOn(HistoryController.class).historyDetailGet(historyDetail.getId(),historyDetail.getLanguage(),account)).withRel("detail-update"));
+//        }
 
         return ResponseEntity.ok(historyDetailResource);
     }
@@ -188,8 +242,7 @@ public class HistoryController {
     @PostMapping(value = "/detail", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity historyDetailInsert(@RequestBody @Valid HistoryDetailDto detailDto,
                                               Errors errors,
-                                              @PathVariable(name = "lang", required = true) String lang,
-                                              @CurrentUser Account account) {
+                                              @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
             return ResponseEntity.badRequest().body(errors);
@@ -269,6 +322,129 @@ public class HistoryController {
         return ResponseEntity.status(HttpStatus.OK).body(id+"번 연혁 상세정보 삭제 성공");
     }
 
+
+
+    @GetMapping(value = "/detail/view/{year}/{month}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity historyDetailContentList(@PathVariable(name = "year", required = false) String year,
+                                                   @PathVariable(name = "month", required = false) String month,
+                                                   @PathVariable(name = "lang", required = true) String lang) {
+
+        List<HistoryDetail> detailContentList = historyDetailRepository.findByHdYearAndHdMonthOrderByHdSequence(year, month);
+        List<String> contentList = detailContentList.stream().map(HistoryDetail::getContent).collect(Collectors.toList());
+
+        DetailResponse detailResponse = DetailResponse.builder()
+                .year(year)
+                .month(month)
+                .contentList(contentList)
+                .build();
+
+        return ResponseEntity.ok(detailResponse);
+    }
+
+
+
+
+    /**
+     *  연혁ID에 따른 연혁 세부 조회
+     */
+    @GetMapping(value = "/management/{hitoryId}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity historyManagementGet(@PathVariable(name = "hitoryId", required = false) Long hitoryId,
+                                               @PathVariable(name = "lang", required = true) String lang) {
+
+        List<HistoryDetail> detailList = historyDetailRepository.findByHistoryId(hitoryId);
+
+        return ResponseEntity.ok().body(detailList);
+    }
+
+//    /**
+//     * @param hitoryId 연혁 ID
+//     * @return 연혁ID에 따른 연혁 세부 조회
+//     */
+//    @GetMapping(value = "/management/{hitoryId}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+//    public ResponseEntity historyManagementGet(@PathVariable(name = "hitoryId", required = false) Long hitoryId,
+//                                               @PathVariable(name = "lang", required = true) String lang) {
+//
+//        List<historyManageResponse> responseList = new ArrayList<>();
+//
+//        List<HistoryDetail> detailList = historyDetailRepository.findByHistoryId(hitoryId);
+//
+//
+//            for (int j = 0; j < detailList.size(); j++) {
+//                historyManageResponse manageResponse = new historyManageResponse();
+//                if (!responseList.isEmpty()) {
+//                    for (int i = 0; i < responseList.size(); i++) {
+//
+//                        if (detailList.get(i).getHdYear().equals(responseList.get(i).getHdYear()) && detailList.get(i).getHdMonth().equals(responseList.get(i).getHdMonth())) {
+//                            continue;
+//                        }
+//                        manageResponse.setHdYear(detailList.get(i).getHdYear());
+//                        manageResponse.setHdMonth(detailList.get(j).getHdMonth());
+//                        List<HistoryDetail> equalDetails = historyDetailRepository.findByHdYearAndHdMonthOrderByHdSequence(detailList.get(j).getHdYear(), detailList.get(j).getHdMonth());
+//                        List<String> contentList = equalDetails.stream().map(HistoryDetail::getContent).collect(Collectors.toList());
+//                        manageResponse.setContentList(contentList);
+//                        responseList.add(manageResponse);
+//                    }
+//
+//                } else {
+//                    manageResponse.setHdYear(detailList.get(j).getHdYear());
+//                    manageResponse.setHdMonth(detailList.get(j).getHdMonth());
+//                    List<HistoryDetail> equalDetails = historyDetailRepository.findByHdYearAndHdMonthOrderByHdSequence(detailList.get(j).getHdYear(), detailList.get(j).getHdMonth());
+//                    List<String> contentList = equalDetails.stream().map(HistoryDetail::getContent).collect(Collectors.toList());
+//                    manageResponse.setContentList(contentList);
+//                    responseList.add(manageResponse);
+//                }
+//
+//            }
+
+// /**
+//     * @param hitoryId 연혁 ID
+//     * @return 연혁ID에 따른 연혁 세부 조회
+//     */
+//    @GetMapping(value = "/management/{hitoryId}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+//    public ResponseEntity historyManagementGet(@PathVariable(name = "hitoryId", required = false) Long hitoryId,
+//                                               @PathVariable(name = "lang", required = true) String lang) {
+//
+//        List<historyManageResponse> responseList = new ArrayList<>();
+//
+//        List<HistoryDetail> detailList = historyDetailRepository.findByHistoryId(hitoryId);
+//
+//
+//            for (int j = 0; j < detailList.size(); j++) {
+//                historyManageResponse manageResponse = new historyManageResponse();
+//                if (!responseList.isEmpty()) {
+//                    for (int i = 0; i < responseList.size(); i++) {
+//
+//                        if (detailList.get(i).getHdYear().equals(responseList.get(i).getHdYear()) && detailList.get(i).getHdMonth().equals(responseList.get(i).getHdMonth())) {
+//                            continue;
+//                        }
+//                        manageResponse.setHdYear(detailList.get(i).getHdYear());
+//                        manageResponse.setHdMonth(detailList.get(j).getHdMonth());
+//                        List<HistoryDetail> equalDetails = historyDetailRepository.findByHdYearAndHdMonthOrderByHdSequence(detailList.get(j).getHdYear(), detailList.get(j).getHdMonth());
+//                        List<String> contentList = equalDetails.stream().map(HistoryDetail::getContent).collect(Collectors.toList());
+//                        manageResponse.setContentList(contentList);
+//                        responseList.add(manageResponse);
+//                    }
+//
+//                } else {
+//                    manageResponse.setHdYear(detailList.get(j).getHdYear());
+//                    manageResponse.setHdMonth(detailList.get(j).getHdMonth());
+//                    List<HistoryDetail> equalDetails = historyDetailRepository.findByHdYearAndHdMonthOrderByHdSequence(detailList.get(j).getHdYear(), detailList.get(j).getHdMonth());
+//                    List<String> contentList = equalDetails.stream().map(HistoryDetail::getContent).collect(Collectors.toList());
+//                    manageResponse.setContentList(contentList);
+//                    responseList.add(manageResponse);
+//                }
+//
+//            }
+//
+
+
+
+
+
+
+
+//        return ResponseEntity.ok().body(responseList);
+//    }
 
 // /**
 //     * 연혁상세 등록
@@ -385,18 +561,6 @@ public class HistoryController {
 //
 //        return ResponseEntity.ok(id+"번 연혁 상세정보 삭제 성공");
 //    }
-
-    /**
-     * @param hitoryId 연혁 ID
-     * @return 연혁ID에 따른 연혁 세부 조회
-     */
-    @GetMapping(value = "/management/{hitoryId}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
-    public ResponseEntity historyManagementGet(@PathVariable(name = "hitoryId", required = false) Long hitoryId,
-                                               @PathVariable(name = "lang", required = true) String lang) {
-
-        List<HistoryDetail> detailList = historyDetailRepository.findByHistoryId(hitoryId);
-        return ResponseEntity.ok().body(detailList);
-    }
 
 
 

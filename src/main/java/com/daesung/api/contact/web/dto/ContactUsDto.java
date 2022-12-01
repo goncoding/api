@@ -1,22 +1,18 @@
 package com.daesung.api.contact.web.dto;
 
-import com.daesung.api.common.domain.BusinessField;
-import com.daesung.api.common.domain.Manager;
+import com.daesung.api.common.domain.enumType.ConsentStatus;
 import lombok.Builder;
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 
 @Data
 @Builder
 public class ContactUsDto {
 
+    @NotBlank(message = "사업분야 선택은 필수입니다.")
+    private String busFieldNum;
     @NotBlank(message = "성함은 필수입니다.")
     private String cuName;
     @NotBlank(message = "이메일은 필수입니다.")
@@ -26,11 +22,14 @@ public class ContactUsDto {
     private String cuPhone;
     @NotBlank(message = "문의내용은 필수입니다.")
     private String cuContent;
+
+    private ConsentStatus consentStatus;
     private String cuCheck;
     private String cuAnswer;
     private String mnNum;
     private String cuMemo;
     private String busFieldName;
+
 
 
 }

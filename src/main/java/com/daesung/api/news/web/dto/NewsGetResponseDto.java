@@ -25,5 +25,8 @@ public class NewsGetResponseDto{
     private NewsThumbnailFile newsThumbnailFile;
     private List<NewsFile> newsImgList;
 
+    private News prevNews;
+    private News nextNews;
+
 
 }

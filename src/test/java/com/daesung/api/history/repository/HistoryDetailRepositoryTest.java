@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -152,8 +153,17 @@ class HistoryDetailRepositoryTest extends BaseControllerTest {
 //            System.out.println("historyDetail = " + historyDetail);
 //        }
 
-        HistoryDetail byHdYearAndHdMonthAndHdSequence = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence("1987", "08", 10);
-        System.out.println("byHdYearAndHdMonthAndHdSequence = " + byHdYearAndHdMonthAndHdSequence);
+        List<HistoryDetail> orderByHdSequence = historyDetailRepository.findByHdYearAndHdMonthOrderByHdSequence("1987", "08");
+        for (HistoryDetail historyDetail : orderByHdSequence) {
+            System.out.println("historyDetail = " + historyDetail);
+        }
+
+        System.out.println(" #################################################################### ");
+
+        List<String> collect = orderByHdSequence.stream().map(HistoryDetail::getContent).collect(Collectors.toList());
+        for (String s : collect) {
+            System.out.println("s = " + s);
+        }
 
 
     }

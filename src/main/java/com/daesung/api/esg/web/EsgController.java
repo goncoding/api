@@ -9,7 +9,10 @@ import com.daesung.api.ir.web.dto.IrInfoDto;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FileUtils;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -21,14 +24,20 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Optional;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
+import static com.daesung.api.utils.upload.UploadUtil.UPLOAD_PATH;
 
 @RestController
 @RequiredArgsConstructor
@@ -129,6 +138,35 @@ public class EsgController {
         } else {
             return ResponseEntity.badRequest().body(new ErrorResponse("수정 시 파일첨부는 필수입니다.","400"));
         }
+    }
+
+    //pdf 불러오기
+    @GetMapping("/view/{id}")
+    public ResponseEntity openPdf(@PathVariable(name = "id") Long id,
+                                  @PathVariable(name = "lang") String lang,
+                                  HttpServletResponse response, HttpServletRequest request) throws Exception {
+
+        Optional<Esg> optionalEsg = esgRepository.findById(id);
+        if (!optionalEsg.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 ESG 정보가 없습니다. id를 확인해주세요.","400"));
+        }
+        Esg esg = optionalEsg.get();
+        String fileName = esg.getEsgFileOriginalName();
+        String fileSavedPath = fileDir + esg.getEsgFileSavedPath() + "/" + esg.getEsgFileSavedName();
+
+        byte[] fileByte = FileUtils.readFileToByteArray(new File(fileSavedPath));
+
+        response.setContentType("application/pdf");
+        response.setContentLength(fileByte.length);
+
+        response.setHeader("Content-Disposition", "inline; fileName=\"" + URLEncoder.encode(esg.getEsgFileOriginalName(), "UTF-8") + "\";");
+        response.getOutputStream().write(fileByte);
+
+        response.getOutputStream().flush();
+        response.getOutputStream().close();
+
+
+        return ResponseEntity.ok("pdf 불러오기 성공");
     }
 
 

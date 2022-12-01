@@ -12,6 +12,10 @@ public class UploadFile {
 	String uriPath;
 	String summary;
 
+	Integer height;
+
+	Integer width;
+
 	public UploadFile setFileNameEmpty(boolean bool) {
 		fileNameEmpty = bool;
 		return this;

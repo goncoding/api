@@ -646,9 +646,9 @@ public class HistoryRecordController {
 
 
 
-    private static void deleteFile(HistoryRecordFile historyRecordFile) {
+    public void deleteFile(HistoryRecordFile historyRecordFile) {
 
-        String fileSavedPath = historyRecordFile.getHrFileSavedPath() + "/" + historyRecordFile.getHrFileSavedName();
+        String fileSavedPath = fileDir + historyRecordFile.getHrFileSavedPath() + "/" + historyRecordFile.getHrFileSavedName();
 
         File file = new File(fileSavedPath);
         if (file.exists()) {
@@ -704,4 +704,7 @@ public class HistoryRecordController {
             }
         }
     }
+
+
+
 }

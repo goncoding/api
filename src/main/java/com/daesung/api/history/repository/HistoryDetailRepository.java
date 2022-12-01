@@ -14,6 +14,8 @@ public interface HistoryDetailRepository extends JpaRepository<HistoryDetail, Lo
 
     HistoryDetail findByHdYearAndHdMonthAndHdSequence(String year, String month, Integer sequence);
 
+    List<HistoryDetail> findByHdYearAndHdMonthOrderByHdSequence(String year, String month);
+
     @Query("select hd from HistoryDetail hd where hd.history.id = :historyId")
     List<HistoryDetail> findByHistoryId(Long historyId);
 

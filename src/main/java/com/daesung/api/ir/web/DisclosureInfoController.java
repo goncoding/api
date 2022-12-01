@@ -2,9 +2,12 @@ package com.daesung.api.ir.web;
 
 import com.daesung.api.common.response.ErrorResponse;
 import com.daesung.api.ir.domain.DisclosureInfo;
+import com.daesung.api.ir.domain.IrInfo;
 import com.daesung.api.ir.repository.DisclosureInfoRepository;
 import com.daesung.api.ir.resource.DisclosureInfoResource;
 import com.daesung.api.ir.web.dto.DisclosureInfoDto;
+import com.daesung.api.ir.web.dto.DisclosureInfoInsertResponse;
+import com.daesung.api.utils.StrUtil;
 import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
@@ -17,13 +20,16 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.Optional;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
@@ -39,6 +45,8 @@ public class DisclosureInfoController {
     String savePath = "/disclosure_info";
 
     String whiteList = "all"; //모든 파일 통과
+
+    String imageWhiteList = "jpg, gif, png";
 
     private final DisclosureInfoRepository disclosureInfoRepository;
     private final FileStore fileStore;
@@ -89,8 +97,19 @@ public class DisclosureInfoController {
         String title = disClosureDto.getDiTitle().replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "");
 
         if (attachFile != null) {
-
             try {
+
+                int width = 0;
+                int height = 0;
+
+                boolean  extCheck = fileStore._typeOk(imageWhiteList, attachFile.getOriginalFilename());
+                if (extCheck) {
+                    BufferedImage bufferedImage = ImageIO.read(attachFile.getInputStream());
+
+                    width = bufferedImage.getWidth();
+                    height = bufferedImage.getHeight();
+                }
+
                 UploadFile uploadFile = fileStore.storeFile(attachFile, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 사이즈를 확인 해주세요.", "400"));
@@ -106,7 +125,13 @@ public class DisclosureInfoController {
 
                 DisclosureInfo savedDisclosure = disclosureInfoRepository.save(disclosureInfo);
 
-                return ResponseEntity.ok(savedDisclosure);
+                DisclosureInfoInsertResponse insertResponse = DisclosureInfoInsertResponse.builder()
+                        .disclosureInfo(savedDisclosure)
+                        .width(width)
+                        .height(height)
+                        .build();
+
+                return ResponseEntity.ok(insertResponse);
 
             } catch (IOException e) {
                 return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
@@ -135,9 +160,64 @@ public class DisclosureInfoController {
         return ResponseEntity.ok(id + "번 전자공시가 삭제되었습니다.");
     }
 
-    private void deleteFile(DisclosureInfo disclosureInfo) {
+    /**
+     * 전자공시 단건 다운로드
+     */
+    @GetMapping(value = "/down/{id}")
+    public ResponseEntity recordFileDown(HttpServletResponse response,
+                                         @PathVariable(name = "id") Long id,
+                                         @PathVariable(name = "lang") String lang) throws UnsupportedEncodingException {
 
-        String fileSavedPath = disclosureInfo.getDiFileSavedPath() + "/" + disclosureInfo.getDiFileSavedName();
+        Optional<DisclosureInfo> optionalDisclosureInfo = disclosureInfoRepository.findById(id);
+        if (!optionalDisclosureInfo.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 전자공시 정보가 없습니다. 파일 id를 확인해주세요.","400"));
+        }
+        DisclosureInfo disclosureInfo = optionalDisclosureInfo.get();
+
+        return download(response, disclosureInfo);
+    }
+
+    public ResponseEntity<?> download(HttpServletResponse response, DisclosureInfo disclosureInfo) {
+
+        String fileSavedPath = fileDir + disclosureInfo.getDiFileSavedPath() + "/" + disclosureInfo.getDiFileSavedName();
+
+        File file = new File(fileSavedPath);
+
+        String name = StrUtil.encodeKR(disclosureInfo.getDiFileOriginalName().replaceAll("(%20| |\\+)+", " "));
+
+        response.setContentType("application/octet-stream");
+        response.setContentLength((int) file.length());
+        response.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\";", name));
+        response.setHeader("Content-Transfer-Encoding", "binary");
+
+        OutputStream out = null;
+        FileInputStream fis = null;
+        try {
+            out = response.getOutputStream();
+            fis = new FileInputStream(file);
+            FileCopyUtils.copy(fis, out);
+            out.flush();
+
+            return ResponseEntity.ok("파일 다운로드 성공");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getLocalizedMessage(), "500"));
+        } finally {
+            try {
+                if (out != null) out.close();
+            } catch (Exception e) {
+            }
+            try {
+                if (fis != null) fis.close();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+
+    public void  deleteFile(DisclosureInfo disclosureInfo) {
+
+        String fileSavedPath = fileDir + disclosureInfo.getDiFileSavedPath() + "/" + disclosureInfo.getDiFileSavedName();
 
         File file = new File(fileSavedPath);
         if (file.exists()) {

@@ -14,6 +14,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
+import static com.daesung.api.utils.upload.UploadUtil.UPLOAD_PATH;
+
 @Component
 public class FileStore {
 
@@ -34,15 +36,7 @@ public class FileStore {
     }
 
     //단일 upload 처리
-    public UploadFile
-
-
-
-
-
-
-
-    storeFile(MultipartFile multipartFile, String savePath, String whiteList) throws IOException {
+    public UploadFile storeFile(MultipartFile multipartFile, String savePath, String whiteList) throws IOException {
 
         int max = 10; //최대사이즈 : 10MB;
 
@@ -52,7 +46,8 @@ public class FileStore {
 
         if (multipartFile != null && multipartFile.getSize() > 0 && !StrUtil.isEmpty(multipartFile.getName())) {
 
-            String dir = fileDir + savePath + "/" + strToday;
+            String filePath = savePath + "/" + strToday;
+            String dir = fileDir + UPLOAD_PATH + filePath;
 
 //            String whiteList = "jpg, png, gif, hwp, pdf, ppt, pptx, xls, xlsx, zip, doc";
 
@@ -88,7 +83,7 @@ public class FileStore {
             multipartFile.transferTo(upFile);
             return up.setNewName(newFileName)
                     .setOriginName(originName)
-                    .setRealPath(String.format("%s", dir));
+                    .setRealPath(String.format("%s%s", UPLOAD_PATH, filePath));
 
         }
 
@@ -106,7 +101,7 @@ public class FileStore {
 
     }
 
-    private static final boolean _typeOk(String whiteList, String fileName) {
+    public boolean _typeOk(String whiteList, String fileName) {
         System.out.println("########## whiteList : " + whiteList);
         System.out.println("########## fileName : " + fileName);
         String fileExt = getExtension(fileName);

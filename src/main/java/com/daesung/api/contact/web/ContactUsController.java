@@ -1,11 +1,15 @@
 package com.daesung.api.contact.web;
 
+import com.daesung.api.common.domain.BusinessField;
 import com.daesung.api.common.domain.Manager;
+import com.daesung.api.common.repository.BusinessFieldRepository;
 import com.daesung.api.common.repository.ManagerRepository;
 import com.daesung.api.common.resource.ManagerDtoResource;
 import com.daesung.api.common.response.ErrorResponse;
+import com.daesung.api.common.web.BusinessFieldController;
 import com.daesung.api.common.web.dto.ManagerDto;
 import com.daesung.api.contact.domain.ContactUs;
+import com.daesung.api.common.domain.enumType.ConsentStatus;
 import com.daesung.api.contact.domain.enumType.Cucheck;
 import com.daesung.api.contact.repository.ContactUsRepository;
 import com.daesung.api.contact.repository.condition.ContactSearchCondition;
@@ -13,11 +17,8 @@ import com.daesung.api.contact.resource.ContactUsListResource;
 import com.daesung.api.contact.resource.ContactUsResource;
 import com.daesung.api.contact.web.dto.ContactUsDto;
 import com.daesung.api.contact.web.dto.ContactUsUpdateDto;
-import com.daesung.api.ethical.domain.EthicalReport;
-import com.daesung.api.history.domain.History;
-import com.daesung.api.history.resource.HistoryListResource;
-import com.daesung.api.history.resource.HistoryResource;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -40,11 +41,14 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/{lang}/contact")
 public class ContactUsController {
 
     private final ContactUsRepository contactUsRepository;
     private final ManagerRepository managerRepository;
+
+    private final BusinessFieldRepository businessFieldRepository;
 
     /**
      *  1대1 문의 리스트 조회
@@ -74,36 +78,9 @@ public class ContactUsController {
         }
 
         Page<ContactUs> contactUsPage = contactUsRepository.searchContactList(searchCondition, pageable);
-//        Page<ContactUs> contactUsPage = contactUsRepository.findAll(pageable);
         PagedModel<EntityModel<ContactUs>> pagedModel = assembler.toModel(contactUsPage, e -> new ContactUsListResource(e));
 
         return ResponseEntity.ok().body(pagedModel);
-    }
-
-    /**
-     *  1대1 문의 등록
-     */
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
-    public ResponseEntity contactInsert(@RequestBody @Valid ContactUsDto contactUsDto,
-                                        Errors errors,
-                                        @PathVariable(name = "lang", required = true) String lang) {
-
-        if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        ContactUs contactUs = ContactUs.builder()
-                .cuName(contactUsDto.getCuName())
-                .cuEmail(contactUsDto.getCuEmail())
-                .cuPhone(contactUsDto.getCuPhone())
-                .cuContent(contactUsDto.getCuContent())
-                .cuCheck(Cucheck.N)
-                .language(lang)
-                .build();
-
-        ContactUs savedContactUs = contactUsRepository.save(contactUs);
-
-        return ResponseEntity.ok(savedContactUs);
     }
 
     /**
@@ -118,17 +95,65 @@ public class ContactUsController {
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 1대1 문의가 없습니다.","400"));
         }
         ContactUs contactUs = optionalContactUs.get();
+        String busFieldNum = contactUs.getBusinessField().getBusFieldNum();
 
-        //todo 1. 수정 만들어지면 link 추가하기
+
         ContactUsResource contactUsResource = new ContactUsResource(contactUs);
-        contactUsResource.add(linkTo(methodOn(ContactUsController.class).getManager(id,lang)).withRel("get-manager(cu_id)"));
+        contactUsResource.add(linkTo(methodOn(BusinessFieldController.class).businessFieldNumGet(busFieldNum,lang)).withRel("get-businessField(busFieldNum)"));
+
+        if (contactUs.getManager() != null) {
+            contactUsResource.add(linkTo(methodOn(ContactUsController.class).getManager(id,lang)).withRel("get-manager(cu_id)"));
+        }
 
 
         return ResponseEntity.ok(contactUsResource);
     }
 
     /**
-     *  1대1 문의 수정
+     *  1대1 문의 등록 (등록시 cuAnswer, mnNum, cuMemo null 값 )
+     */
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity contactInsert(@RequestBody @Valid ContactUsDto contactUsDto,
+                                        Errors errors,
+                                        @PathVariable(name = "lang", required = true) String lang) {
+
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        if (contactUsDto.getConsentStatus() != ConsentStatus.Y) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("개인정보에 동의 해주세요.","404"));
+        }
+
+
+        Optional<BusinessField> optionalBusinessField = businessFieldRepository.findByBusFieldNum(contactUsDto.getBusFieldNum());
+        if (!optionalBusinessField.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 사업분야가 없습니다. 사업분야 번호를 확인 해주세요.","400"));
+        }
+        BusinessField businessField = optionalBusinessField.get();
+
+        ContactUs contactUs = ContactUs.builder()
+                .cuName(contactUsDto.getCuName())
+                .cuEmail(contactUsDto.getCuEmail())
+                .cuPhone(contactUsDto.getCuPhone())
+                .cuContent(contactUsDto.getCuContent())
+                .consentStatus(ConsentStatus.Y)
+                .cuCheck(Cucheck.N)
+                .businessField(businessField)
+                .language(lang)
+                .build();
+
+        ContactUs savedContactUs = contactUsRepository.save(contactUs);
+        String busFieldNum = savedContactUs.getBusinessField().getBusFieldNum();
+
+        ContactUsResource contactUsResource = new ContactUsResource(contactUs);
+        contactUsResource.add(linkTo(methodOn(BusinessFieldController.class).businessFieldNumGet(busFieldNum,lang)).withRel("get-businessField(busFieldNum)"));
+
+        return ResponseEntity.ok(contactUsResource);
+    }
+
+    /**
+     *  1대1 문의 수정 (수정시 cuAnswer, , cuMemo 값이 null이 아니면 mnNum값 필수)
      */
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity contactUpdate(@RequestBody @Valid ContactUsUpdateDto updateDto,
@@ -144,9 +169,13 @@ public class ContactUsController {
         if (!optionalContactUs.isPresent()) {
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 1대1 문의가 없습니다.","400"));
         }
-
         ContactUs contactUs = optionalContactUs.get();
 
+        Optional<BusinessField> optionalBusinessField = businessFieldRepository.findByBusFieldNum(updateDto.getBusFieldNum());
+        if (!optionalBusinessField.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 사업분야가 없습니다. 사업분야 번호를 확인 해주세요.","400"));
+        }
+        String busFieldNum = optionalBusinessField.get().getBusFieldNum();
 
 
         if ("Y".equals(updateDto.getCuCheck())) {
@@ -168,14 +197,16 @@ public class ContactUsController {
             contactUs.setCuAnswer(updateDto.getCuAnswer());
             contactUs.setCuMemo(contactUs.getCuMemo());
         }
-        //todo update dto 추가 ( not blank 제거)
-        //todo changedto 추가
+
         contactUs.changeContactUs(updateDto);
 
         ContactUs updatedContactUs = contactUsRepository.save(contactUs);
 
         ContactUsResource contactUsResource = new ContactUsResource(updatedContactUs);
-        contactUsResource.add(linkTo(methodOn(ContactUsController.class).getManager(id,lang)).withRel("get-manager(cu_id)"));
+        contactUsResource.add(linkTo(methodOn(BusinessFieldController.class).businessFieldNumGet(busFieldNum,lang)).withRel("get-businessField(busFieldNum)"));
+        if (contactUs.getManager() != null) {
+            contactUsResource.add(linkTo(methodOn(ContactUsController.class).getManager(id,lang)).withRel("get-manager(cu_id)"));
+        }
 
         return ResponseEntity.ok(contactUsResource);
     }

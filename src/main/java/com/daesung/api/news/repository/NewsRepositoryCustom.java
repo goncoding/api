@@ -9,4 +9,8 @@ public interface NewsRepositoryCustom {
 
     Page<News> searchNewsList(NewsSearchCondition condition, Pageable pageable);
 
+    News searchPrevNews(Long id, NewsSearchCondition condition);
+
+    News searchNextNews(Long id, NewsSearchCondition condition);
+
 }

@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static com.daesung.api.utils.upload.UploadUtil.UPLOAD_PATH;
+
 @Component
 @RequiredArgsConstructor
 public class EsgThumbFileStore {
@@ -51,7 +53,8 @@ public class EsgThumbFileStore {
 
         if (multipartFile != null && multipartFile.getSize() > 0 && !StrUtil.isEmpty(multipartFile.getName())) {
 
-            String dir = fileDir + savePath + "/" + strToday;
+            String filePath = savePath + "/" + strToday;
+            String dir = fileDir + UPLOAD_PATH + filePath;
 
 //            String whiteList = "jpg, png, gif, hwp, pdf, ppt, pptx, xls, xlsx, zip, doc";
 
@@ -93,7 +96,7 @@ public class EsgThumbFileStore {
             multipartFile.transferTo(upFile);
             return up.setNewName(newFileName)
                     .setOriginName(originName)
-                    .setRealPath(String.format("%s", dir));
+                    .setRealPath(String.format("%s%s", UPLOAD_PATH, filePath));
 
         }
 

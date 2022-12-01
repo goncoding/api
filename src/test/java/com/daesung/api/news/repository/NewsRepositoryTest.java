@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Query;
 
 class NewsRepositoryTest extends BaseControllerTest {
 
@@ -43,6 +44,37 @@ class NewsRepositoryTest extends BaseControllerTest {
     @DisplayName("보도 insert")
     @Test
     public void _테스트_report_insert() throws Exception{
+
+
+//        @Query(nativeQuery = true, value = "SELECT n.id  FROM News n where n.id  < :id  ORDER BY n.id DESC Limit 1")
+//        News findByIdPrev(Long id);
+//
+//        @Query(nativeQuery = true, value = "SELECT n.id  FROM News n where n.id  > :id  ORDER BY n.id DESC Limit 1")
+//        News findByIdNext(Long id);
+
+
+    }
+
+
+    @DisplayName("뉴스 insert")
+    @Test
+    public void _테스트_news_search() throws Exception{
+
+        NewsSearchCondition condition = NewsSearchCondition.builder()
+                .nbType(NbType.NE)
+                .searchTitle("title..1")
+//                .searchText("content..222")
+                .build();
+
+        News news = newsRepository.searchPrevNews(18L, condition);
+
+        System.out.println("news = " + news);
+
+        News news2 = newsRepository.searchNextNews(18L, condition);
+
+        System.out.println("news2 = " + news2);
+
+
 
 
     }

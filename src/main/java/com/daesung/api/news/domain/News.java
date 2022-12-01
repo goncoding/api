@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -47,6 +48,7 @@ public class News extends BaseTimeEntity {
 
     private String updUser;
 
+    private LocalDate selectRegDate; //작성일 추가
 
 
 

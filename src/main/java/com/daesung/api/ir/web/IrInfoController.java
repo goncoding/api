@@ -1,6 +1,7 @@
 package com.daesung.api.ir.web;
 
 import com.daesung.api.common.response.ErrorResponse;
+import com.daesung.api.history.domain.HistoryRecordFile;
 import com.daesung.api.ir.domain.IrInfo;
 import com.daesung.api.ir.domain.IrYear;
 import com.daesung.api.ir.domain.enumType.IrType;
@@ -8,6 +9,8 @@ import com.daesung.api.ir.repository.IrInfoRepository;
 import com.daesung.api.ir.repository.IrYearRepository;
 import com.daesung.api.ir.resource.IrInfoListResource;
 import com.daesung.api.ir.web.dto.IrInfoDto;
+import com.daesung.api.ir.web.dto.IrInfoInsertResponse;
+import com.daesung.api.utils.StrUtil;
 import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
@@ -20,14 +23,17 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.Optional;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
@@ -44,6 +50,10 @@ public class IrInfoController {
     String savePath = "/ir_info";
 
     String whiteList = "all"; //모든 파일 통과
+
+    String imageWhiteList = "jpg, gif, png";
+
+
 
     private final IrInfoRepository irInfoRepository;
     private final IrYearRepository irYearRepository;
@@ -115,8 +125,19 @@ public class IrInfoController {
 
         //파일 업로드
         if (attachFile != null) {
-
             try {
+
+                int width = 0;
+                int height = 0;
+
+                boolean  extCheck = fileStore._typeOk(imageWhiteList, attachFile.getOriginalFilename());
+                if (extCheck) {
+                    BufferedImage bufferedImage = ImageIO.read(attachFile.getInputStream());
+
+                    width = bufferedImage.getWidth();
+                    height = bufferedImage.getHeight();
+                }
+
                 UploadFile uploadFile = fileStore.storeFile(attachFile, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 사이즈를 확인 해주세요.", "400"));
@@ -139,7 +160,14 @@ public class IrInfoController {
 
                 IrInfo savedIrInfo = irInfoRepository.save(irInfo);
 
-                return ResponseEntity.ok(savedIrInfo);
+                IrInfoInsertResponse insertResponse = IrInfoInsertResponse.builder()
+                        .irInfo(savedIrInfo)
+                        .width(width)
+                        .height(height)
+                        .build();
+
+
+                return ResponseEntity.ok(insertResponse);
 
             } catch (IOException e) {
                 return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
@@ -168,16 +196,70 @@ public class IrInfoController {
         return ResponseEntity.ok(id+"번 자료관리가 삭제되었습니다.");
     }
 
-    private static void deleteFile(IrInfo irInfo) {
+    /**
+     * IR 자료관리 단건 다운로드
+     */
+    @GetMapping(value = "/down/{id}")
+    public ResponseEntity recordFileDown(HttpServletResponse response,
+                                         @PathVariable(name = "id") Long id,
+                                         @PathVariable(name = "lang") String lang) throws UnsupportedEncodingException {
 
-        String fileSavedPath = irInfo.getIrFileSavedPath() + "/" + irInfo.getIrFileSavedName();
+        Optional<IrInfo> optionalIrInfo = irInfoRepository.findById(id);
+        if (!optionalIrInfo.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 IR 자료관리 정보가 없습니다. 파일 id를 확인해주세요.","400"));
+        }
+        IrInfo irInfo = optionalIrInfo.get();
+
+        return download(response, irInfo);
+    }
+
+    public ResponseEntity<?> download(HttpServletResponse response, IrInfo irInfo) {
+
+        String fileSavedPath = fileDir + irInfo.getIrFileSavedPath() + "/" + irInfo.getIrFileSavedName();
+
+        File file = new File(fileSavedPath);
+
+        String name = StrUtil.encodeKR(irInfo.getIrFileOriginalName().replaceAll("(%20| |\\+)+", " "));
+
+        response.setContentType("application/octet-stream");
+        response.setContentLength((int) file.length());
+        response.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\";", name));
+        response.setHeader("Content-Transfer-Encoding", "binary");
+
+        OutputStream out = null;
+        FileInputStream fis = null;
+        try {
+            out = response.getOutputStream();
+            fis = new FileInputStream(file);
+            FileCopyUtils.copy(fis, out);
+            out.flush();
+
+            return ResponseEntity.ok("파일 다운로드 성공");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getLocalizedMessage(), "500"));
+        } finally {
+            try {
+                if (out != null) out.close();
+            } catch (Exception e) {
+            }
+            try {
+                if (fis != null) fis.close();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+
+    public void deleteFile(IrInfo irInfo) {
+
+        String fileSavedPath = fileDir + irInfo.getIrFileSavedPath() + "/" + irInfo.getIrFileSavedName();
 
         File file = new File(fileSavedPath);
         if (file.exists()) {
             file.delete();
         }
     }
-
 
     private IrType getIrType(IrInfoDto irInfoDto) {
         if ("MP".equals(irInfoDto.getIrType())) {

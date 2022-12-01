@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Commit;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class BusinessFieldRepositoryTest extends BaseControllerTest {
@@ -190,6 +192,11 @@ class BusinessFieldRepositoryTest extends BaseControllerTest {
 
 //        BusinessField fieldName = businessFieldRepository.findByBusFieldName("윤리경영신고");
 //        System.out.println("fieldName = " + fieldName);
+
+        Optional<BusinessField> byBusFieldNum = businessFieldRepository.findByBusFieldNum("001");
+        BusinessField businessField = byBusFieldNum.get();
+        System.out.println("businessField = " + businessField);
+
 
     }
 

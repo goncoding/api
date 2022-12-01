@@ -1,6 +1,7 @@
 package com.daesung.api.ir.web;
 
 import com.daesung.api.common.response.ErrorResponse;
+import com.daesung.api.contact.domain.ContactUs;
 import com.daesung.api.history.domain.History;
 import com.daesung.api.history.resource.HistoryListResource;
 import com.daesung.api.ir.domain.IrYear;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.MediaType;
@@ -43,13 +45,19 @@ public class IrYearController {
      */
     @GetMapping(produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
     public ResponseEntity irYearListGet(Pageable pageable,
+                                        PagedResourcesAssembler<IrYear> assembler,
                                         @RequestParam(name = "page", required = false, defaultValue = "") String page,
                                         @RequestParam(name = "size", required = false, defaultValue = "") String size,
                                         @PathVariable(name = "lang", required = true) String lang) {
 
         Sort sort = Sort.by("iyYear").descending();
-        List<IrYear> irYearList = irYearRepository.findAll(sort);
-        return ResponseEntity.ok().body(irYearList);
+
+        Pageable pageRequest = PageRequest.of(0, 9999, sort);
+
+        Page<IrYear> yearPage = irYearRepository.findAll(pageRequest);
+
+        PagedModel<EntityModel<IrYear>> pagedModel = assembler.toModel(yearPage);
+        return ResponseEntity.ok().body(pagedModel);
     }
 
 

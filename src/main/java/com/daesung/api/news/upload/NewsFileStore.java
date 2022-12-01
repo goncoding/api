@@ -20,6 +20,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
+import static com.daesung.api.utils.upload.UploadUtil.UPLOAD_PATH;
+
 @Component
 @RequiredArgsConstructor
 public class NewsFileStore {
@@ -55,7 +57,9 @@ public class NewsFileStore {
 
         if (multipartFile != null && multipartFile.getSize() > 0 && !StrUtil.isEmpty(multipartFile.getName())) {
 
-            String dir = fileDir + savePath + "/" + strToday;
+            String filePath = savePath + "/" + strToday;
+            String dir = fileDir + UPLOAD_PATH + filePath;
+
 
 //            String whiteList = "jpg, png, gif, hwp, pdf, ppt, pptx, xls, xlsx, zip, doc";
 
@@ -78,7 +82,7 @@ public class NewsFileStore {
 
             List<NewsFile> newsFileList = newsFileRepository.findByNewsId(id);
             for (NewsFile newsFile : newsFileList) {
-                String fileSavedPath = newsFile.getNewsFileSavedPath() + "/" + newsFile.getNewsFileSavedName();
+                String fileSavedPath = fileDir + newsFile.getNewsFileSavedPath() + "/" + newsFile.getNewsFileSavedName();
 
                 File file = new File(fileSavedPath);
                 if (file.exists()) {
@@ -100,7 +104,7 @@ public class NewsFileStore {
             multipartFile.transferTo(upFile);
             return up.setNewName(newFileName)
                     .setOriginName(originName)
-                    .setRealPath(String.format("%s", dir));
+                    .setRealPath(String.format("%s%s", UPLOAD_PATH, filePath));
 
         }
 

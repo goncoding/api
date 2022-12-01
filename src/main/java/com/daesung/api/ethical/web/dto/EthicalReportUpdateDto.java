@@ -10,12 +10,15 @@ import javax.validation.constraints.NotBlank;
 @Builder
 public class EthicalReportUpdateDto {
 
-
+    @NotBlank(message = "성함은 필수입니다.")
     private String erName;
 
+    @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "이메일 형식을 확인 해주세요.")
     private String erEmail;
+    @NotBlank(message = "연락처는 필수입니다.")
     private String erPhone;
+    @NotBlank(message = "문의내용은 필수입니다.")
     private String erTitle;
     private String erContent;
     private String erCheck;

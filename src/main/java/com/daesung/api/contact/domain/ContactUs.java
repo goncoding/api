@@ -1,7 +1,7 @@
 package com.daesung.api.contact.domain;
 
+import com.daesung.api.common.domain.enumType.ConsentStatus;
 import com.daesung.api.contact.domain.enumType.Cucheck;
-import com.daesung.api.contact.web.dto.ContactUsDto;
 import com.daesung.api.contact.web.dto.ContactUsUpdateDto;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.common.domain.BusinessField;
@@ -40,6 +40,9 @@ public class ContactUs extends BaseTimeEntity {
 
     @Column(columnDefinition = "TEXT")
     private String cuMemo;
+
+    @Enumerated(EnumType.STRING)
+    private ConsentStatus consentStatus = ConsentStatus.N;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,12 +1,12 @@
 package com.daesung.api.ethical.web.dto;
 
-import lombok.AllArgsConstructor;
+import com.daesung.api.common.domain.enumType.ConsentStatus;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
@@ -19,9 +19,13 @@ public class EthicalReportDto {
     private String erEmail;
     @NotBlank(message = "연락처는 필수입니다.")
     private String erPhone;
-    @NotBlank(message = "문의내용은 필수입니다.")
+    @NotBlank(message = "문의제목은 필수입니다.")
     private String erTitle;
+    @NotBlank(message = "문의내용은 필수입니다.")
     private String erContent;
+    @NotNull(message = "동의여부는 필수입니다.")
+    private ConsentStatus consentStatus;
+
     private String erCheck;
     private String erAnswer;
     private String mnNum;

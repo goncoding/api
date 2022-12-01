@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public class UploadUtil {
 
+	public static final String UPLOAD_PATH = "/upload";
 	public static final int IMAGE = 1;
 	public static final int DOCUMENT = 2;
 	public static final int VIDEO = 3;

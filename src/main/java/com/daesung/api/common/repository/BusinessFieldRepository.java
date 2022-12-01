@@ -9,5 +9,8 @@ import java.util.Optional;
 public interface BusinessFieldRepository extends JpaRepository<BusinessField, Long> {
 
     Optional<BusinessField> findByBusFieldName(String busFieldName);
+    Optional<BusinessField> findByBusFieldNum(String busFieldNum);
+
+
 
 }
