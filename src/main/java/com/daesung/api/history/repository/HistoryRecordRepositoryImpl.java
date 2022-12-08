@@ -45,6 +45,40 @@ public class HistoryRecordRepositoryImpl implements HistoryRecordRepositoryCusto
         return new PageImpl<>(content, pageable, total);
     }
 
+    @Override
+    public HistoryRecord searchPrevRecord(Long id, Search search) {
+
+        HistoryRecord prevRecord = queryFactory
+                .selectFrom(historyRecord)
+                .where(
+                        titleEq(search.getSearchTitle()),
+                        hrCategoryEq(search.getHrCategory()),
+                        historyRecord.id.gt(id)
+                )
+                .limit(1)
+                .orderBy(historyRecord.id.asc())
+                .fetchOne();
+
+        return prevRecord;
+    }
+
+    @Override
+    public HistoryRecord searchNextRecord(Long id, Search search) {
+
+        HistoryRecord nextRecord = queryFactory
+                .selectFrom(historyRecord)
+                .where(
+                        titleEq(search.getSearchTitle()),
+                        hrCategoryEq(search.getHrCategory()),
+                        historyRecord.id.lt(id)
+                )
+                .limit(1)
+                .orderBy(historyRecord.id.desc())
+                .fetchOne();
+
+        return nextRecord;
+    }
+
     private BooleanExpression titleEq(String searchTitle) {
         return searchTitle == null ? null : historyRecord.hrTitle.contains(searchTitle);
     }

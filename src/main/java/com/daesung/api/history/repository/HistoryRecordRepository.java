@@ -8,4 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HistoryRecordRepository extends JpaRepository<HistoryRecord, Long>, HistoryRecordRepositoryCustom {
     Page<HistoryRecord> searchRecordList(Search search, Pageable pageable);
+
+    HistoryRecord searchPrevRecord(Long id, Search search);
+
+    HistoryRecord searchNextRecord(Long id, Search search);
+
 }

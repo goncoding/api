@@ -30,12 +30,15 @@ public class EthicalReport extends BaseTimeEntity {
     private String erEmail;
     private String erPhone;
     private String erTitle;
+
     @Column(columnDefinition = "TEXT")
     private String erContent;
 
     @Enumerated(EnumType.STRING)
     private ErCheck erCheck = ErCheck.N;
 
+    private String mnNum;
+    private String mnName;
     private String erAnswer;
     @Column(columnDefinition = "TEXT")
     private String erMemo;
@@ -60,6 +63,8 @@ public class EthicalReport extends BaseTimeEntity {
         this.manager = manager;
         this.erAnswer = dto.getErAnswer();
         this.erMemo = dto.getErMemo();
+        this.mnName = manager.getMnName();
+        this.mnNum = manager.getMnNum();
     }
 
 

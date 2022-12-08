@@ -5,8 +5,11 @@ import com.daesung.api.ir.domain.DisclosureInfo;
 import com.daesung.api.ir.domain.IrInfo;
 import com.daesung.api.ir.repository.DisclosureInfoRepository;
 import com.daesung.api.ir.resource.DisclosureInfoResource;
+import com.daesung.api.ir.upload.DisclosureInfoFileStore;
+import com.daesung.api.ir.upload.IrInfoFileStore;
 import com.daesung.api.ir.web.dto.DisclosureInfoDto;
 import com.daesung.api.ir.web.dto.DisclosureInfoInsertResponse;
+import com.daesung.api.ir.web.dto.DisclosureInfoUpdateResponse;
 import com.daesung.api.utils.StrUtil;
 import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.upload.FileStore;
@@ -50,6 +53,8 @@ public class DisclosureInfoController {
 
     private final DisclosureInfoRepository disclosureInfoRepository;
     private final FileStore fileStore;
+
+    private final DisclosureInfoFileStore disclosureInfoFileStore;
 
     //todo 리스트 조회 테스트 필요
     /**
@@ -139,6 +144,67 @@ public class DisclosureInfoController {
         } else {
             return ResponseEntity.badRequest().body(new ErrorResponse("파일첨부는 필수입니다.", "400"));
         }
+    }
+
+     /**
+     * 전자공시 수정
+     */
+    @PutMapping(value = "/{id}", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
+            produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity disclosureInfoUpdate(@RequestPart(name = "disClosureDto") @Valid DisclosureInfoDto disClosureDto, Errors errors,
+                                               @RequestPart(name = "attachFile", required = false) MultipartFile attachFile,
+                                               @PathVariable(name = "id") Long id,
+                                               @PathVariable(name = "lang") String lang) {
+
+
+        Optional<DisclosureInfo> optionalDisclosureInfo = disclosureInfoRepository.findById(id);
+        if (!optionalDisclosureInfo.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 전자공시 정보가 없습니다. id를 확인해주세요.","400"));
+        }
+        DisclosureInfo disclosureInfo = optionalDisclosureInfo.get();
+
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        String title = disClosureDto.getDiTitle().replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "");
+
+        if (attachFile != null) {
+            try {
+
+                int width = 0;
+                int height = 0;
+
+                boolean  extCheck = fileStore._typeOk(imageWhiteList, attachFile.getOriginalFilename());
+                if (extCheck) {
+                    BufferedImage bufferedImage = ImageIO.read(attachFile.getInputStream());
+
+                    width = bufferedImage.getWidth();
+                    height = bufferedImage.getHeight();
+                }
+
+                UploadFile uploadFile = disclosureInfoFileStore.storeFile(attachFile, savePath, whiteList, id);
+                if (uploadFile.isWrongType()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 사이즈를 확인 해주세요.", "400"));
+                }
+
+                disclosureInfo.updateDisclosureFileInfo(uploadFile);
+
+            } catch (IOException e) {
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
+            }
+        }
+
+        disclosureInfo.updateDisclosureInfo(title);
+
+        DisclosureInfo updatedDisclosure = disclosureInfoRepository.save(disclosureInfo);
+
+        DisclosureInfoUpdateResponse updateResponse = DisclosureInfoUpdateResponse.builder()
+                .disclosureInfo(updatedDisclosure)
+                .build();
+
+        return ResponseEntity.ok(updateResponse);
+
     }
 
 

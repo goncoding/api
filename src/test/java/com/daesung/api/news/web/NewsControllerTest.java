@@ -3,8 +3,10 @@ package com.daesung.api.news.web;
 import com.daesung.api.common.BaseControllerTest;
 import com.daesung.api.history.web.dto.HistorytDto;
 import com.daesung.api.news.domain.News;
+import com.daesung.api.news.domain.NewsThumbnailFile;
 import com.daesung.api.news.domain.enumType.NbType;
 import com.daesung.api.news.repository.NewsRepository;
+import com.daesung.api.news.repository.NewsThumbnailFileRepository;
 import com.daesung.api.news.web.dto.NewsDto;
 import com.google.common.net.HttpHeaders;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +19,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.Commit;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -27,6 +30,9 @@ class NewsControllerTest extends BaseControllerTest {
 
     @Autowired
     NewsRepository newsRepository;
+
+    @Autowired
+    NewsThumbnailFileRepository newsThumbnailFileRepository;
 
     @Autowired
     ModelMapper modelMapper;
@@ -41,7 +47,7 @@ class NewsControllerTest extends BaseControllerTest {
                 .nbType("NE")
                 .title("title")
                 .content("content")
-                .viewCnt(21L)
+                .viewCnt(21)
                 .language("kr")
                 .thumbSummary("썸네일 관련 내용입니다.")
                 .build();
@@ -73,7 +79,7 @@ class NewsControllerTest extends BaseControllerTest {
 //                .content("content...")
                 .newCompany("다음뉴스")
                 .link("https://v.daum.net/v/20220919104308505")
-                .viewCnt(21L)
+                .viewCnt(21)
                 .language("ko")
                 .build();
 
@@ -109,6 +115,18 @@ class NewsControllerTest extends BaseControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
     }
+
+    @DisplayName("")
+    @Test
+    public void _테스트22() throws Exception{
+
+        List<NewsThumbnailFile> all = newsThumbnailFileRepository.findAll();
+        for (NewsThumbnailFile newsThumbnailFile : all) {
+            System.out.println("newsThumbnailFile = " + newsThumbnailFile);
+        }
+
+    }
+
 
 
 }

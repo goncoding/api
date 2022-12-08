@@ -138,6 +138,7 @@ public class ContactUsController {
                 .cuPhone(contactUsDto.getCuPhone())
                 .cuContent(contactUsDto.getCuContent())
                 .consentStatus(ConsentStatus.Y)
+                .businessFieldName(businessField.getBusFieldName())
                 .cuCheck(Cucheck.N)
                 .businessField(businessField)
                 .language(lang)
@@ -191,8 +192,10 @@ public class ContactUsController {
             if (!optionalManager.isPresent()) {
                 return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 매니저가 없습니다. 매니저를 선택하세요. 사번 = "+updateDto.getMnNum(),"400"));
             }
-            //todo change Answer
+
             Manager manager = optionalManager.get();
+            contactUs.setMnNum(manager.getMnNum());
+            contactUs.setMnName(manager.getMnName());
             contactUs.setManager(manager);
             contactUs.setCuAnswer(updateDto.getCuAnswer());
             contactUs.setCuMemo(contactUs.getCuMemo());

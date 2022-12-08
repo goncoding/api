@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class IrInfoRepositoryTest extends BaseControllerTest {
@@ -20,17 +22,28 @@ class IrInfoRepositoryTest extends BaseControllerTest {
     @Test
     public void _테스트() throws Exception{
 
-        Search search = Search.builder()
-                .build();
+//        Search search = Search.builder()
+//                .build();
+//
+//        PageRequest pageRequest = PageRequest.of(0, 5);
+//
+//        Page<IrInfo> irInfos = irInfoRepository.searchIrInfoList(search, pageRequest);
+//
+//        for (IrInfo irInfo : irInfos) {
+//            System.out.println("irInfo = " + irInfo);
+//        }
 
-        PageRequest pageRequest = PageRequest.of(0, 5);
+//        List<IrInfo> byIrYear = irInfoRepository.findByIrYear(2L);
+//        for (IrInfo irInfo : byIrYear) {
+//            System.out.println("irInfo = " + irInfo);
+//        }
 
-        Page<IrInfo> irInfos = irInfoRepository.searchIrInfoList(search, pageRequest);
+        PageRequest of = PageRequest.of(0, 1);
 
+        List<IrInfo> irInfos = irInfoRepository.findbyLastIrId(of);
         for (IrInfo irInfo : irInfos) {
             System.out.println("irInfo = " + irInfo);
         }
-
 
 
     }

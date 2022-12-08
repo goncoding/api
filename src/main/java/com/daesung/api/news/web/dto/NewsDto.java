@@ -25,7 +25,7 @@ public class NewsDto {
     private String content;
     private String newCompany;
     private String link;
-    private Long viewCnt;
+    private int viewCnt;
     private String language;
     private String thumbSummary;
 

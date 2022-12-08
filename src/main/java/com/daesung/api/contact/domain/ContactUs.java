@@ -30,6 +30,13 @@ public class ContactUs extends BaseTimeEntity {
     private String cuEmail;
     private String cuPhone;
 
+    private String mnNum;
+
+    private String mnName;
+
+    private String businessFieldName;
+
+
     @Column(columnDefinition = "TEXT")
     private String cuContent;
 

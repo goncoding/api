@@ -49,12 +49,34 @@ public class NewsRepositoryImpl implements NewsRepositoryCustom{
         return new PageImpl<>(content, pageable, total);
     }
 
+//    @Override
+//    public Page<NewsListResponse> searchNewsList(NewsSearchCondition condition, Pageable pageable) {
+//
+//        QueryResults<NewsListResponse> results = queryFactory
+//                .select(Projections.constructor(NewsListResponse.class, news, newsThumbnailFile))
+//                .from(news)
+//                .where(
+//                        titleEq(condition.getSearchTitle()),
+//                        textEq(condition.getSearchText()),
+//                        TypeEq(condition.getNbType())
+//                )
+//                .join(newsThumbnailFile).on(news.id.eq(newsThumbnailFile.id))
+//                .offset(pageable.getOffset())
+//                .limit(pageable.getPageSize())
+//                .orderBy(NewsSort(pageable))
+//                .fetchResults();
+//
+//        List<NewsListResponse> content = results.getResults();
+//        long total = results.getTotal();
+//
+//        return new PageImpl<>(content, pageable, total);
+//    }
+
     @Override
     public News searchPrevNews(Long id, NewsSearchCondition condition) {
 
         News prevNews = queryFactory
-                .select(news)
-                .from(news)
+                .selectFrom(news)
                 .where(
                         titleEq(condition.getSearchTitle()),
                         textEq(condition.getSearchText()),
@@ -72,8 +94,7 @@ public class NewsRepositoryImpl implements NewsRepositoryCustom{
     public News searchNextNews(Long id, NewsSearchCondition condition) {
 
         News prevNews = queryFactory
-                .select(news)
-                .from(news)
+                .selectFrom(news)
                 .where(
                         titleEq(condition.getSearchTitle()),
                         textEq(condition.getSearchText()),

@@ -81,7 +81,18 @@ public class PopupController {
     /**
      * 팝업관리 단건 조회
      */
+    @GetMapping(value = "/{id}", produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity popupGet(@PathVariable(name = "id") Long id,
+                                   @PathVariable(name = "lang") String lang) {
 
+        Optional<Popup> optionalPopup = popupRepository.findById(id);
+        if (!optionalPopup.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 팝업 정보가 없습니다. id를 확인해주세요.","400"));
+        }
+        Popup popup = optionalPopup.get();
+
+        return ResponseEntity.ok(popup);
+    }
 
     /**
      * 팝업관리 등록

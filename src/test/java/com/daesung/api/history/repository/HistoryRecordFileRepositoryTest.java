@@ -31,9 +31,12 @@ class HistoryRecordFileRepositoryTest extends BaseControllerTest {
 
 //        historyRecordFileRepository.deleteByHrId(65L);
 
-        Date currentDate = new Date();
-        long current_timestamp = currentDate.getTime()/1000;
-        System.out.println("current_timestamp = " + current_timestamp);
+//        Date currentDate = new Date();
+//        long current_timestamp = currentDate.getTime()/1000;
+//        System.out.println("current_timestamp = " + current_timestamp);
+
+
+
 
     }
 

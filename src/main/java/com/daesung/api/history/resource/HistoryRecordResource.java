@@ -20,7 +20,8 @@ public class HistoryRecordResource extends EntityModel<HistoryRecord> {
 
     public HistoryRecordResource(HistoryRecord content, Link... links) {
         super(content, links);
-        add(linkTo(methodOn(HistoryRecordController.class).recordGet(content.getId(), content.getLanguage())).withSelfRel());
+        add(linkTo(methodOn(HistoryRecordController.class).recordUpdate(content.getId(), null,null,null,null,null,null,null, content.getLanguage())).withRel("update-historyRecord"));
+//        add(linkTo(methodOn(HistoryRecordController.class).recordGet(content.getId(),null,null,null,null,null, content.getLanguage())).withSelfRel());
     }
 
 //    public HistoryRecordResource(HistoryRecord content, SearchDto searchDto, Link... links) {

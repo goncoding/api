@@ -33,6 +33,9 @@ public class NewsValidation {
             }
         }
         if ("RE".equals(newsDto.getNbType())) {
+            if (title == null) {
+                errors.rejectValue("title","wrongValue","보도(RE) 선택시 title 필수입니다.");
+            }
             if (link == null) {
                 errors.rejectValue("link","wrongValue","보도(RE) 선택시 link 필수입니다.");
             }

@@ -38,4 +38,7 @@ public class NewsThumbnailFile extends RegTimeEntity {
     private String regUser;
 
 
+    public void updateThumbnailSummary(String thumbSummary) {
+        this.thumbnailFileSummary = thumbSummary;
+    }
 }

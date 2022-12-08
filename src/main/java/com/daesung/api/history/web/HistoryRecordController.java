@@ -7,12 +7,7 @@ import com.daesung.api.history.domain.enumType.HrCategory;
 import com.daesung.api.history.repository.HistoryRecordFileRepository;
 import com.daesung.api.history.repository.HistoryRecordRepository;
 import com.daesung.api.history.resource.*;
-import com.daesung.api.history.web.dto.RecordDto;
-import com.daesung.api.history.web.dto.RecordListResponseDto;
-import com.daesung.api.history.web.dto.recordResponseDto;
-import com.daesung.api.news.domain.NewsThumbnailFile;
-import com.daesung.api.news.web.dto.NewsGetResponseDto;
-import com.daesung.api.utils.HtmlStringUtil;
+import com.daesung.api.history.web.dto.*;
 import com.daesung.api.utils.StrUtil;
 import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.search.SearchDto;
@@ -21,14 +16,11 @@ import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.FileCopyUtils;
@@ -40,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -78,31 +69,9 @@ public class HistoryRecordController {
                                      @RequestParam(name = "page", required = false, defaultValue = "") Integer page,
                                      @RequestParam(name = "size", required = false, defaultValue = "") Integer size,
                                      @PathVariable(name = "lang", required = true) String lang) {
-//        NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
-        Search search = new Search();
-        //todo 상황에 따라서 뒤에 queryString을 만들 필요가 있다.
-        search.setRecordType(recordType);
-        search.setSearchType(searchType);
-        search.setSearchText(searchText);
-//        search.setPage(page);
-//        search.setSize(size);
 
-        if ("tit".equals(searchType)) {
-            search.setSearchTitle(searchText);
-        }
-        if ("NY".equals(recordType)) {
-            search.setHrCategory(HrCategory.NEW_YEAR_ADDRESS);
-        }
-        if ("CO".equals(recordType)) {
-            search.setHrCategory(HrCategory.COMMEMORATIVE);
-        }
-        if ("CI".equals(recordType)) {
-            search.setHrCategory(HrCategory.CI);
-        }
+        Search search = getSearch(searchType, searchText, recordType);
 
-//        Pageable pageRequest = PageRequest.of(0, 10);
-
-        //todo page 넘기면서 검색 값 같이 넘기기
         Page<HistoryRecord> historyRecords = historyRecordRepository.searchRecordList(search, pageable);
 
         SearchDto searchDto = new SearchDto(searchType,searchText,recordType);
@@ -115,12 +84,7 @@ public class HistoryRecordController {
 
         RecordListResponseDto recordListResponseDto = new RecordListResponseDto(pagedModel, search);
 
-        PagedModel<EntityModel<HistoryRecord>> pagedModel01 = assembler.toModel(historyRecords, e -> {
-            HistoryRecordResource historyRecordResource = new HistoryRecordResource(e);
-            return historyRecordResource;
-        });
-
-
+        PagedModel<EntityModel<HistoryRecord>> pagedModel01 = assembler.toModel(historyRecords);
 
         return ResponseEntity.ok(pagedModel01);
     }
@@ -131,6 +95,11 @@ public class HistoryRecordController {
     //todo 이전글 이후글 기능 구현
     @GetMapping(value = "{id}", produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity recordGet(@PathVariable(name = "id", required = true) Long id,
+                                    @RequestParam(name = "searchType", required = false) String searchType,
+                                    @RequestParam(name = "searchText", required = false) String searchText,
+                                    @RequestParam(name = "recordType", required = false) String recordType,
+                                    @RequestParam(name = "page", required = false) Integer page,
+                                    @RequestParam(name = "size", required = false) Integer size,
                                     @PathVariable(name = "lang", required = true) String lang) {
 
         Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
@@ -140,38 +109,36 @@ public class HistoryRecordController {
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();
 
+        Search search = getSearch(searchType, searchText, recordType);
+
+        HistoryRecord prevRecord = historyRecordRepository.searchPrevRecord(id, search);
+        HistoryRecord nextRecord = historyRecordRepository.searchNextRecord(id, search);
 
 
-        //todo update 만들면 resource 추가
-//        historyRecordResource.add(linkTo());
+        List<HistoryRecordFile> fileList = historyRecordFileRepository.findByHrId(id);
 
-        List<HistoryRecordFile> historyRecordFileList = historyRecordFileRepository.findByHrId(id);
+        HistoryRecordGetResponse historyRecordGetResponse = HistoryRecordGetResponse.builder()
+                .historyRecord(historyRecord)
+                .historyRecordFileList(fileList)
+                .prevRecord(prevRecord)
+                .nextRecord(nextRecord)
+                .build();
 
-        recordResponseDto recordResponseDto = new recordResponseDto(historyRecord, historyRecordFileList);
+        HistoryRecordGetResource getResource = new HistoryRecordGetResource(historyRecordGetResponse);
 
-//        HistoryRecordResource historyRecordResource = new HistoryRecordResource(historyRecord);
-
-        long before = id - 1;
-        long after = id + 1;
-
-        HistoryRecordGetResource historyRecordGetResource = new HistoryRecordGetResource(recordResponseDto);
-        historyRecordGetResource.add(linkTo(methodOn(HistoryRecordController.class).recordUpdate(historyRecord.getId(),null,null,null,null,null,null,null, lang)).withRel("update-historyRecord"));
-        historyRecordGetResource.add(linkTo(methodOn(HistoryRecordController.class).recordGet(before,lang)).withRel("get-next"));
-        historyRecordGetResource.add(linkTo(methodOn(HistoryRecordController.class).recordGet(after,lang)).withRel("get-prev"));;
-
-        return ResponseEntity.ok(historyRecordGetResource);
+        return ResponseEntity.ok(getResource);
     }
 
 
     /**
      * 히스토리 단건 조회 다운로드
      */
-    @GetMapping(value = "/down/{hrId}")
+    @GetMapping(value = "/down/{fileId}")
     public ResponseEntity recordFileDown(HttpServletResponse response,
-                                         @PathVariable(name = "hrId") Long hrId,
+                                         @PathVariable(name = "fileId") Long id,
                                          @PathVariable(name = "lang") String lang) throws UnsupportedEncodingException {
 
-        Optional<HistoryRecordFile> optionalRecordFile = historyRecordFileRepository.findById(hrId);
+        Optional<HistoryRecordFile> optionalRecordFile = historyRecordFileRepository.findById(id);
         if (!optionalRecordFile.isPresent()) {
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 파일 정보가 없습니다. 파일 id를 확인해주세요.","400"));
         }
@@ -352,13 +319,14 @@ public class HistoryRecordController {
             }
         }
 
-        HistoryRecordFileResource historyRecordFileResource = new HistoryRecordFileResource(savedRecord);
-        historyRecordFileResource.add(linkTo(HistoryRecordController.class, lang).withSelfRel());
-        historyRecordFileResource.add(linkTo(methodOn(HistoryRecordController.class).recordGet(savedRecord.getId(), lang)).withRel("get-historyRecord"));
-        historyRecordFileResource.add(linkTo(methodOn(HistoryRecordController.class).recordUpdate(savedRecord.getId(),null,null,null,null,null,null,null, lang)).withRel("update-historyRecord"));
+        List<HistoryRecordFile> fileList = historyRecordFileRepository.findByHrId(savedRecord.getId());
 
-        return ResponseEntity.ok(historyRecordFileResource);
+        HistoryRecordInsertResponse insertResponse = HistoryRecordInsertResponse.builder()
+                .historyRecord(savedRecord)
+                .historyRecordFileList(fileList)
+                .build();
 
+        return ResponseEntity.ok(new HistoryRecordInsertResource(insertResponse));
     }
 
 
@@ -545,31 +513,6 @@ public class HistoryRecordController {
             }
         }
 
-//        if (recordFiles != null) {
-//            try {
-//                List<UploadFile> uploadFiles = fileStore.storeFileList(recordFiles, savePath, whiteList);
-//
-//                for (UploadFile uploadFile : uploadFiles) {
-//                    if (uploadFile.isWrongType()) {
-//                        return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
-//                    }
-//
-//                    HistoryRecordFile recordFile = HistoryRecordFile.builder()
-//                            .hrFileOriginalName(uploadFile.getOriginName())
-//                            .hrFileSavedName(uploadFile.getNewName())
-//                            .hrFileSavedPath(uploadFile.getRealPath())
-//                            .historyRecord(savedRecord)
-//                            .build();
-//
-//                    HistoryRecordFile savedFile = historyRecordFileRepository.save(recordFile);
-//                    recordFileList.add(savedFile);
-//                }
-//
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-
         HistoryRecordUpdateResource updateResource = new HistoryRecordUpdateResource(savedRecord);
         updateResource.add(linkTo(methodOn(HistoryRecordController.class).recordUpdate(savedRecord.getId(), null,null,null,null,null,null,null,lang)).withSelfRel());
         updateResource.add(linkTo(methodOn(HistoryRecordController.class).recordFilesGet(savedRecord.getId(), lang)).withRel("get-files"));
@@ -613,7 +556,7 @@ public class HistoryRecordController {
     /**
      * 히스토리 파일 삭제
      */
-    @DeleteMapping("/files/{hrId}/{seq}")
+    @DeleteMapping("/file/{hrId}/{seq}")
     public ResponseEntity deleteAttachFile(@PathVariable("seq") String seq,
                                            @PathVariable("hrId") Long hrId) {
 
@@ -644,8 +587,6 @@ public class HistoryRecordController {
     }
 
 
-
-
     public void deleteFile(HistoryRecordFile historyRecordFile) {
 
         String fileSavedPath = fileDir + historyRecordFile.getHrFileSavedPath() + "/" + historyRecordFile.getHrFileSavedName();
@@ -659,16 +600,36 @@ public class HistoryRecordController {
     private static HrCategory getEnumCategory(RecordDto recordDto) {
         String hrCategory = recordDto.getHrCategory();
 
-        if ("HY".equals(hrCategory)) {
-            return HrCategory.NEW_YEAR_ADDRESS;
+        if ("NA".equals(hrCategory)) {
+            return HrCategory.NA;
         }
-        if ("CO".equals(hrCategory)) {
-            return HrCategory.COMMEMORATIVE;
+        if ("CS".equals(hrCategory)) {
+            return HrCategory.CS;
         }
         if ("CI".equals(hrCategory)) {
             return HrCategory.CI;
         }
         return null;
+    }
+
+    private static Search getSearch(String searchType, String searchText, String recordType) {
+        Search search = new Search();
+        search.setSearchType(searchType);
+        search.setSearchText(searchText);
+
+        if ("tit".equals(searchType)) {
+            search.setSearchTitle(searchText);
+        }
+        if ("NA".equals(recordType)) {
+            search.setHrCategory(HrCategory.NA);
+        }
+        if ("CS".equals(recordType)) {
+            search.setHrCategory(HrCategory.CS);
+        }
+        if ("CI".equals(recordType)) {
+            search.setHrCategory(HrCategory.CI);
+        }
+        return search;
     }
 
     private static ResponseEntity<?> download(HttpServletResponse response, HistoryRecordFile recordFile) {

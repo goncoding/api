@@ -1,6 +1,7 @@
 package com.daesung.api.ir.web;
 
 import com.daesung.api.common.response.ErrorResponse;
+import com.daesung.api.esg.upload.EsgThumbFileStore;
 import com.daesung.api.history.domain.HistoryRecordFile;
 import com.daesung.api.ir.domain.IrInfo;
 import com.daesung.api.ir.domain.IrYear;
@@ -8,8 +9,10 @@ import com.daesung.api.ir.domain.enumType.IrType;
 import com.daesung.api.ir.repository.IrInfoRepository;
 import com.daesung.api.ir.repository.IrYearRepository;
 import com.daesung.api.ir.resource.IrInfoListResource;
+import com.daesung.api.ir.upload.IrInfoFileStore;
 import com.daesung.api.ir.web.dto.IrInfoDto;
 import com.daesung.api.ir.web.dto.IrInfoInsertResponse;
+import com.daesung.api.ir.web.dto.IrInfoUpdateResponse;
 import com.daesung.api.utils.StrUtil;
 import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.upload.FileStore;
@@ -17,6 +20,7 @@ import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.MediaTypes;
@@ -34,6 +38,7 @@ import javax.validation.Valid;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.List;
 import java.util.Optional;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
@@ -58,6 +63,8 @@ public class IrInfoController {
     private final IrInfoRepository irInfoRepository;
     private final IrYearRepository irYearRepository;
     private final FileStore fileStore;
+
+    private final IrInfoFileStore irInfoFileStore;
 
 
     /**
@@ -123,12 +130,19 @@ public class IrInfoController {
             return ResponseEntity.badRequest().body(new ErrorResponse("IR 카테고리는 필수입니다.", "400"));
         }
 
+        Optional<IrYear> optionalIrYear = irYearRepository.findByIyYear(irInfoDto.getIrYear());
+        if (!optionalIrYear.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("해당 연도를 연도관리에서 추가 해주세요.", "400"));
+        }
+        IrYear irYear = optionalIrYear.get();
+
         //파일 업로드
         if (attachFile != null) {
             try {
 
                 int width = 0;
                 int height = 0;
+                long frontId = 0L;
 
                 boolean  extCheck = fileStore._typeOk(imageWhiteList, attachFile.getOriginalFilename());
                 if (extCheck) {
@@ -143,18 +157,25 @@ public class IrInfoController {
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 사이즈를 확인 해주세요.", "400"));
                 }
 
-                Optional<IrYear> optionalIrYear = irYearRepository.findByIyYear(irInfoDto.getIrYear());
-                if (!optionalIrYear.isPresent()) {
-                    return ResponseEntity.badRequest().body(new ErrorResponse("해당 연도를 연도관리에서 추가 해주세요.", "400"));
+                //front id 기준
+                List<IrInfo> irInfos = irInfoRepository.findbyLastIrId(PageRequest.of(0, 1));
+                for (IrInfo irInfo : irInfos) {
+                    if (irInfo.getFrontId() == null) {
+                        frontId = 0;
+                    } else {
+                        frontId = irInfo.getFrontId();
+                    }
                 }
 
                 IrInfo irInfo = IrInfo.builder()
+                        .frontId(++frontId)
                         .irType(irType)
-                        .irYear(optionalIrYear.get())
+                        .irYear(irYear)
                         .irTitle(irInfoDto.getIrTitle())
                         .irFileOriginalName(uploadFile.getOriginName())
                         .irFileSavedName(uploadFile.getNewName())
                         .irFileSavedPath(uploadFile.getRealPath())
+                        .year(irYear.getIyYear())
                         .language(lang)
                         .build();
 
@@ -176,6 +197,73 @@ public class IrInfoController {
         } else {
             return ResponseEntity.badRequest().body(new ErrorResponse("파일첨부는 필수입니다.","400"));
         }
+    }
+
+    /**
+     * IR 자료관리 수정
+     */
+    @PutMapping(value = "/{id}", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
+            produces = MediaTypes.HAL_JSON_VALUE + CHARSET_UTF8)
+    public ResponseEntity irInfoUpdate(@RequestPart @Valid IrInfoDto irInfoDto, Errors errors,
+                                       @RequestPart(name = "attachFile", required = false) MultipartFile attachFile,
+                                       @PathVariable(name = "id") Long id,
+                                       @PathVariable(name = "lang") String lang) {
+
+
+        Optional<IrInfo> optionalIrInfo = irInfoRepository.findById(id);
+        if (!optionalIrInfo.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 자료관리 정보가 없습니다. id를 확인해주세요.","400"));
+        }
+
+        IrInfo irInfo = optionalIrInfo.get();
+
+
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        String title = irInfoDto.getIrTitle().replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "");
+
+        //MP("경영실적"), AR("감사보고서"),BR("사업보고서");
+        IrType irType = getIrType(irInfoDto);
+        if (irType == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("IR 카테고리는 필수입니다.", "400"));
+        }
+
+        Optional<IrYear> optionalIrYear = irYearRepository.findByIyYear(irInfoDto.getIrYear());
+        if (!optionalIrYear.isPresent()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("해당 연도를 연도관리에서 추가 해주세요.", "400"));
+        }
+        IrYear irYear = optionalIrYear.get();
+
+        if (attachFile != null) {
+            try {
+
+                UploadFile uploadFile = irInfoFileStore.storeFile(attachFile, savePath, whiteList, id);
+                if (uploadFile.isWrongType()) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 사이즈를 확인 해주세요.", "400"));
+                }
+
+                irInfo.updateFileIrInfo(uploadFile);
+
+            } catch (IOException e) {
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
+            }
+
+        }
+
+        String year = irInfoDto.getIrYear();//list 화면 확인
+
+        irInfo.updateIrInfo(irType, irYear, year, title);
+
+        IrInfo updatedIrInfo = irInfoRepository.save(irInfo);
+
+        IrInfoUpdateResponse updateResponse = IrInfoUpdateResponse.builder()
+                .irInfo(updatedIrInfo)
+                .irYear(updatedIrInfo.getIrYear().getIyYear())
+                .build();
+
+        return ResponseEntity.ok(updateResponse);
     }
 
     /**

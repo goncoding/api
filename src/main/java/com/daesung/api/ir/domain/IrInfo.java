@@ -1,8 +1,11 @@
 package com.daesung.api.ir.domain;
 
 import com.daesung.api.ir.domain.enumType.IrType;
+import com.daesung.api.ir.web.dto.IrInfoDto;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.utils.date.RegTimeEntity;
+import com.daesung.api.utils.upload.UploadFile;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -23,6 +26,8 @@ public class IrInfo extends RegTimeEntity {
     @Column(name = "ir_id")
     private Long id;
 
+    private Long frontId;
+
     @Enumerated(EnumType.STRING)
     private IrType irType;
 
@@ -34,7 +39,9 @@ public class IrInfo extends RegTimeEntity {
     @Column(length = 1024)
     private String irFileSavedPath;
     private String regUser;
+    private String year;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "iy_id")
     private IrYear irYear;
@@ -53,8 +60,16 @@ public class IrInfo extends RegTimeEntity {
         }
     }
 
+    public void updateIrInfo(IrType irType, IrYear irYear, String year, String title) {
+        this.irType = irType;
+        this.irYear = irYear;
+        this.year = year;
+        this.irTitle = title;
+    }
 
-
-
-
+    public void updateFileIrInfo(UploadFile uploadFile) {
+        this.irFileOriginalName = uploadFile.getOriginName();
+        this.irFileSavedName = uploadFile.getNewName();
+        this.irFileSavedPath = uploadFile.getRealPath();
+    }
 }

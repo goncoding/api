@@ -4,7 +4,9 @@ import com.daesung.api.common.response.ErrorResponse;
 import com.daesung.api.contact.domain.ContactUs;
 import com.daesung.api.history.domain.History;
 import com.daesung.api.history.resource.HistoryListResource;
+import com.daesung.api.ir.domain.IrInfo;
 import com.daesung.api.ir.domain.IrYear;
+import com.daesung.api.ir.repository.IrInfoRepository;
 import com.daesung.api.ir.repository.IrYearRepository;
 import com.daesung.api.ir.resource.IrYearResource;
 import com.daesung.api.ir.web.dto.IrYearDto;
@@ -39,6 +41,8 @@ public class IrYearController {
 
 
     private final IrYearRepository irYearRepository;
+
+    private final IrInfoRepository irInfoRepository;
 
     /**
      * IR_연도관리 리스트 조회
@@ -147,8 +151,12 @@ public class IrYearController {
         if (!optionalIrYear.isPresent()) {
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 IR 연도 정보가 없습니다.", "400"));
         }
-
         IrYear irYear = optionalIrYear.get();
+
+        List<IrInfo> irInfoList = irInfoRepository.findByIrYear(id);
+        if (irInfoList != null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("자료관리에 "+irYear.getIyYear()+"년도 자료가 남아있습니다. 삭제 후 진행 해주세요.","500"));
+        }
 
         irYearRepository.deleteById(irYear.getId());
 

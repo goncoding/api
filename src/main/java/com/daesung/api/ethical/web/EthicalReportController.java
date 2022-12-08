@@ -134,6 +134,7 @@ public class EthicalReportController {
         String busFieldNum = businessField.getBusFieldNum();
 
         EthicalReport ethicalReport = EthicalReport.builder()
+                .erTitle(reportDto.getErTitle())
                 .erName(reportDto.getErName())
                 .erEmail(reportDto.getErEmail())
                 .erPhone(reportDto.getErPhone())

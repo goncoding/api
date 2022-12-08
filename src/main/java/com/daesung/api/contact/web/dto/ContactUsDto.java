@@ -24,6 +24,7 @@ public class ContactUsDto {
     private String cuContent;
 
     private ConsentStatus consentStatus;
+
     private String cuCheck;
     private String cuAnswer;
     private String mnNum;

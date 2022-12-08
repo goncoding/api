@@ -1,5 +1,6 @@
 package com.daesung.api.news.domain;
 
+import com.daesung.api.news.web.dto.NewsDto;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.news.domain.enumType.NbType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,7 +32,8 @@ public class News extends BaseTimeEntity {
 
     private String title;
     private String content;
-    private Long viewCnt;
+    @Column(columnDefinition = "integer default 0", nullable = false)
+    private Integer viewCnt;
     private String newCompany; //회사명
     private String link;
 
@@ -51,8 +53,24 @@ public class News extends BaseTimeEntity {
     private LocalDate selectRegDate; //작성일 추가
 
 
+    public void updateNews(NewsDto newsDto) {
+        //link, newCompany 초기화
+        this.newCompany = null;
+        this.link = null;
+        this.nbType = NbType.NE;
+        this.title = newsDto.getTitle();
+        this.content = newsDto.getContent();
+        this.selectRegDate = newsDto.getSelectRegDate();
+    }
 
 
-
-
+    public void updateReport(NewsDto newsDto) {
+        //content 초기화
+        this.content = null;
+        this.nbType = NbType.RE;
+        this.title = newsDto.getTitle();
+        this.newCompany = newsDto.getNewCompany();
+        this.link = newsDto.getLink();
+        this.selectRegDate = newsDto.getSelectRegDate();
+    }
 }
