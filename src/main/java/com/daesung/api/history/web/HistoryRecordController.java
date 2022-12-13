@@ -183,8 +183,8 @@ public class HistoryRecordController {
         if (errors.hasErrors()) {
             return ResponseEntity.badRequest().body(errors);
         }
-        //html 태그 제거
-        String content = recordDto.getHrContent().replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "");
+
+//        String content = recordDto.getHrContent().replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "");
 
         //NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
         HrCategory enumCategory = getEnumCategory(recordDto);
@@ -197,7 +197,7 @@ public class HistoryRecordController {
                 .hrCategory(enumCategory)
                 .hrCategoryName(description)
                 .hrTitle(recordDto.getHrTitle())
-                .hrContent(content)
+                .hrContent(recordDto.getHrContent())
                 .language(lang)
                 .build();
 
@@ -366,9 +366,11 @@ public class HistoryRecordController {
             return ResponseEntity.badRequest().body(new ErrorResponse("히스토리 카테고리는 필수입니다.", "400"));
         }
 
-        historyRecord.updateRecord(recordDto, historyRecord, content, enumCategory, description);
+        historyRecord.updateRecord(recordDto, historyRecord, enumCategory, description);
 
         HistoryRecord savedRecord = historyRecordRepository.save(historyRecord);
+
+
 
 
         if (attachFile01 != null) {

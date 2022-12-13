@@ -60,5 +60,6 @@ public class Popup extends RegTimeEntity {
         this.puStartDate = dto.getStartDate();
         this.puEndDate = dto.getEndDate();
         this.puSequence = dto.getSequence();
+        this.puFileSummary = dto.getFileSummary();
     }
 }

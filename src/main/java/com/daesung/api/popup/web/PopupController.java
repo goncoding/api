@@ -183,11 +183,6 @@ public class PopupController {
             } catch (IOException e) {
                 return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(), "500 (IOException)"));
             }
-        } else {
-
-            if (popupDto.getFileSummary() != null) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("이미지 설명은 파일 업로드 후 등록 해주세요.", "400"));
-            }
         }
 
         Popup savedPopup = popupRepository.save(popup);

@@ -34,12 +34,12 @@ public class HistoryRecord extends BaseTimeEntity {
     private String language;
 
 
-    public void updateRecord(RecordDto recordDto, HistoryRecord historyRecord, String content, HrCategory enumCategory, String description) {
+    public void updateRecord(RecordDto recordDto, HistoryRecord historyRecord, HrCategory enumCategory, String description) {
 
         this.hrCategory = enumCategory;
         this.hrCategoryName = description;
         this.hrTitle = recordDto.getHrTitle();
-        this.hrContent = content;
+        this.hrContent = recordDto.getHrContent();
 
 
 

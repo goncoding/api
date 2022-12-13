@@ -35,7 +35,7 @@
 //                .produces(getProduceContentTypes())
 //                .apiInfo(apiInfo())
 //                .select()
-//                .apis(RequestHandlerSelectors.basePackage("com.daesung.api"))
+//                .apis(RequestHandlerSelectors.basePackage("com.daesung.test"))
 ////                .paths(PathSelectors.ant("/api/**"))
 //                .paths(PathSelectors.any())
 //                .build()

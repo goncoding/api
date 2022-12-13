@@ -19,12 +19,14 @@ public class NiceInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nice_id")
     private Long id;
-
     private String compCode;
     private String reqNo;
     private String symKey;
     private String iv;
     private String hmacKey;
+
+    @Column(length = 1024)
+    private String enc_data;
 
 
 }
