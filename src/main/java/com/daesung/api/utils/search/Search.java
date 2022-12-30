@@ -23,6 +23,7 @@ public class Search {
     private Integer size;
     private Integer page;
 
+    private String language;
 
     private String nbType;
 

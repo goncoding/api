@@ -51,7 +51,7 @@ class IrYearControllerTest extends BaseControllerTest {
 
         IrYearDto dto = IrYearDto.builder()
                 .iyYear("2021")
-                .regUser("reg01")
+//                .regUser("reg01")
                 .build();
 
         mockMvc.perform(post("/kr/ir-year")
@@ -73,7 +73,7 @@ class IrYearControllerTest extends BaseControllerTest {
 
         IrYearDto dto = IrYearDto.builder()
                 .iyYear("2023")
-                .regUser("reg02")
+//                .regUser("reg02")
                 .build();
 
 

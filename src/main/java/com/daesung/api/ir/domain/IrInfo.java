@@ -38,7 +38,7 @@ public class IrInfo extends RegTimeEntity {
     private String irFileSavedName;
     @Column(length = 1024)
     private String irFileSavedPath;
-    private String regUser;
+//    private String regUser;
     private String year;
 
     @JsonIgnore

@@ -26,7 +26,7 @@ public class HistoryRecordFile extends RegTimeEntity {
     private String hrFileSavedPath;
     private String hrFileSavedName;
     private String hrFileSeq;
-    private String regUser;
+//    private String regUser;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

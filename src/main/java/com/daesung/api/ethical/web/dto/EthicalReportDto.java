@@ -1,5 +1,6 @@
 package com.daesung.api.ethical.web.dto;
 
+import com.daesung.api.accounts.domain.enumType.AccountRole;
 import com.daesung.api.common.domain.enumType.ConsentStatus;
 import lombok.Builder;
 import lombok.Data;
@@ -25,12 +26,7 @@ public class EthicalReportDto {
     private String erContent;
     @NotNull(message = "동의여부는 필수입니다.")
     private ConsentStatus consentStatus;
-
-    private String erCheck;
-    private String erAnswer;
-    private String mnNum;
-    private String erMemo;
-    private String busFieldName;
+    private AccountRole accountRole;
 
 
 }

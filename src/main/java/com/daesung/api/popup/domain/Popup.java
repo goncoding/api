@@ -38,7 +38,7 @@ public class Popup extends RegTimeEntity {
     @Column(length = 1024)
     private String puFileSummary;
 
-    private String regUser;
+//    private String regUser;
     private String language;
 
     public void changeFileInfo(UploadFile uploadFile, PopupDto dto) {

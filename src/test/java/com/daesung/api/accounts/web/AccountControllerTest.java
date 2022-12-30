@@ -27,8 +27,8 @@ class AccountControllerTest extends BaseControllerTest {
     public void _테스트() throws Exception{
 
         HashSet<AccountRole> roles = new HashSet<>();
-        roles.add(AccountRole.DS_ENERGY);
-        roles.add(AccountRole.DS_POWER);
+        roles.add(AccountRole.USER);
+        roles.add(AccountRole.ADMIN);
 
         String clientId = "daesung";
         String clientSecret = "pass";
@@ -36,7 +36,7 @@ class AccountControllerTest extends BaseControllerTest {
         AccountDto dto = AccountDto.builder()
                 .loginId("gon3")
                 .loginPwd("gon")
-                .acNum("1122")
+//                .acNum("1122")
                 .acName("홍길동")
                 .roles(roles)
                 .build();
@@ -56,8 +56,8 @@ class AccountControllerTest extends BaseControllerTest {
     public void _테스트_loginID_error() throws Exception{
 
         HashSet<AccountRole> roles = new HashSet<>();
-        roles.add(AccountRole.DS_ENERGY);
-        roles.add(AccountRole.DS_POWER);
+        roles.add(AccountRole.USER);
+        roles.add(AccountRole.ADMIN);
 
         String clientId = "daesung";
         String clientSecret = "pass";
@@ -65,7 +65,7 @@ class AccountControllerTest extends BaseControllerTest {
         AccountDto dto = AccountDto.builder()
                 .loginId("gon3")
                 .loginPwd("gon")
-                .acNum("1122")
+//                .acNum("1122")
                 .acName("홍길동")
                 .roles(roles)
                 .build();

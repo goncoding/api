@@ -15,6 +15,7 @@ import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +38,7 @@ import java.util.Optional;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{lang}/disclosure-info")
@@ -96,6 +98,7 @@ public class DisclosureInfoController {
                                                @PathVariable(name = "lang") String lang) {
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "전자공시 등록 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
@@ -117,6 +120,7 @@ public class DisclosureInfoController {
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.error("status = {}, message = {}", "400", "파일명, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 사이즈를 확인 해주세요.", "400"));
                 }
 
@@ -142,6 +146,7 @@ public class DisclosureInfoController {
                 return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
             }
         } else {
+            log.error("status = {}, message = {}", "400", "파일첨부는 필수입니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("파일첨부는 필수입니다.", "400"));
         }
     }
@@ -159,11 +164,13 @@ public class DisclosureInfoController {
 
         Optional<DisclosureInfo> optionalDisclosureInfo = disclosureInfoRepository.findById(id);
         if (!optionalDisclosureInfo.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 전자공시 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 전자공시 정보가 없습니다. id를 확인해주세요.","400"));
         }
         DisclosureInfo disclosureInfo = optionalDisclosureInfo.get();
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "전자공시 수정 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
@@ -185,6 +192,7 @@ public class DisclosureInfoController {
 
                 UploadFile uploadFile = disclosureInfoFileStore.storeFile(attachFile, savePath, whiteList, id);
                 if (uploadFile.isWrongType()) {
+                    log.error("status = {}, message = {}", "400", "파일명, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 사이즈를 확인 해주세요.", "400"));
                 }
 
@@ -216,6 +224,7 @@ public class DisclosureInfoController {
 
         Optional<DisclosureInfo> optionalDisclosureInfo = disclosureInfoRepository.findById(id);
         if (!optionalDisclosureInfo.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 전자공시 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 전자공시 정보가 없습니다. id를 확인해주세요.","400"));
         }
 
@@ -236,6 +245,7 @@ public class DisclosureInfoController {
 
         Optional<DisclosureInfo> optionalDisclosureInfo = disclosureInfoRepository.findById(id);
         if (!optionalDisclosureInfo.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 전자공시 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 전자공시 정보가 없습니다. 파일 id를 확인해주세요.","400"));
         }
         DisclosureInfo disclosureInfo = optionalDisclosureInfo.get();

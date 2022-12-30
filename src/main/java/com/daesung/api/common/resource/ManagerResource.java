@@ -12,6 +12,6 @@ public class ManagerResource extends EntityModel<Manager> {
 
     public ManagerResource(Manager manager, Link... links) {
         super(manager, links);
-        add(linkTo(methodOn(ManagerController.class).getManager(manager.getMnNum(), manager.getLanguage())).withSelfRel());
+        add(linkTo(methodOn(ManagerController.class).managerGet(manager.getMnNum(), manager.getLanguage())).withSelfRel());
     }
 }

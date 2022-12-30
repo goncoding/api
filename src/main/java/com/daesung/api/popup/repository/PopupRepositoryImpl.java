@@ -33,7 +33,7 @@ public class PopupRepositoryImpl implements PopupRepositoryCustom{
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(popup.puSequence.asc())
+                .orderBy(popup.puStartDate.desc(), popup.puSequence.asc())
                 .fetchResults();
 
         List<Popup> content = results.getResults();

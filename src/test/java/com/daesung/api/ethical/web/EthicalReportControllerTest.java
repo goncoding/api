@@ -49,8 +49,8 @@ class EthicalReportControllerTest extends BaseControllerTest {
                 .erEmail("aaa@email.com")
                 .erPhone("010-2222-3333")
                 .erContent("테스트")
-                .mnNum("1104")
-                .erMemo("test memo")
+//                .mnNum("1104")
+//                .erMemo("test memo")
                 .build();
 
         mockMvc.perform(put("/kr/ethical/{id}","1")

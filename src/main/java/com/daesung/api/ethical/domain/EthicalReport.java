@@ -1,5 +1,7 @@
 package com.daesung.api.ethical.domain;
 
+import com.daesung.api.accounts.domain.enumType.AccountRole;
+import com.daesung.api.common.domain.Department;
 import com.daesung.api.common.domain.enumType.ConsentStatus;
 import com.daesung.api.ethical.domain.enumType.ErCheck;
 import com.daesung.api.ethical.web.dto.EthicalReportUpdateDto;
@@ -34,38 +36,48 @@ public class EthicalReport extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String erContent;
 
-    @Enumerated(EnumType.STRING)
-    private ErCheck erCheck = ErCheck.N;
-
     private String mnNum;
     private String mnName;
     private String erAnswer;
+
+    private String language;
+
     @Column(columnDefinition = "TEXT")
     private String erMemo;
 
     @Enumerated(EnumType.STRING)
+    private ErCheck erCheck = ErCheck.N;
+
+    @Enumerated(EnumType.STRING)
     private ConsentStatus consentStatus = ConsentStatus.N;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bus_field_id")
-    private BusinessField businessField;
+    @Enumerated(EnumType.STRING)
+    private AccountRole accountRole;
+
+//    @JsonIgnore
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "bus_field_id")
+//    private BusinessField businessField;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mn_id")
-    private Manager manager;
+    @JoinColumn(name = "dept_id")
+    private Department department;
 
-    private String language;
+//    @JsonIgnore
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "mn_id")
+//    private Manager manager;
 
 
-    public void changeAnswer(EthicalReportUpdateDto dto, Manager manager) {
-        this.manager = manager;
-        this.erAnswer = dto.getErAnswer();
-        this.erMemo = dto.getErMemo();
-        this.mnName = manager.getMnName();
-        this.mnNum = manager.getMnNum();
-    }
+
+//    public void changeAnswer(EthicalReportUpdateDto dto, Manager manager) {
+//        this.manager = manager;
+//        this.erAnswer = dto.getErAnswer();
+//        this.erMemo = dto.getErMemo();
+//        this.mnName = manager.getMnName();
+//        this.mnNum = manager.getMnNum();
+//    }
 
 
     public void changeReport(EthicalReportUpdateDto dto) {
@@ -74,5 +86,8 @@ public class EthicalReport extends BaseTimeEntity {
         this.erPhone = dto.getErPhone();
         this.erTitle = dto.getErTitle();
         this.erContent = dto.getErContent();
+        this.mnName = dto.getMnName();
+        this.erAnswer = dto.getErAnswer();
+        this.erMemo = dto.getErMemo();
     }
 }

@@ -1,6 +1,7 @@
 package com.daesung.api.history.domain;
 
 import com.daesung.api.accounts.domain.Account;
+import com.daesung.api.history.web.dto.HistorytDto;
 import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.*;
@@ -16,7 +17,7 @@ import javax.persistence.*;
 @ToString
 @Builder
 @Table(name = "ds_history")
-public class History extends BaseTimeEntity {
+public class History extends BaseTimeEntity{
 
 
     @Id
@@ -39,16 +40,17 @@ public class History extends BaseTimeEntity {
 
     private String language;
 
-    private String regUser;
+//    private String regUser;
     private String updUser;
 
-    @ManyToOne
-    @JoinColumn(name = "ac_id")
-    private Account adminUser;
+//    @ManyToOne
+//    @JoinColumn(name = "ac_id")
+//    private Account adminUser;
 
     public void changeContent(String content) {
         this.content = content;
     }
+
 
     public void changeFileInfo(UploadFile uploadFile) {
         this.hiOriginFileName = uploadFile.getOriginName();
@@ -56,5 +58,11 @@ public class History extends BaseTimeEntity {
         this.hiFileSavedPath = uploadFile.getRealPath();
     }
 
+//    public void changeHistory(HistorytDto dto) {
+//        this.title = dto.getTitle();
+//        this.content = dto.getContent();
+//        this.hiStartYear = dto.getHiStartYear();
+//        this.hiEndYear = dto.getHiEndYear();
+//    }
 
 }

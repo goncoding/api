@@ -32,7 +32,8 @@ public class HistoryRecordRepositoryImpl implements HistoryRecordRepositoryCusto
                 .selectFrom(historyRecord)
                 .where(
                         titleEq(search.getSearchTitle()),
-                        hrCategoryEq(search.getHrCategory())
+                        hrCategoryEq(search.getHrCategory()),
+                        languageEq(search.getLanguage())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -53,7 +54,8 @@ public class HistoryRecordRepositoryImpl implements HistoryRecordRepositoryCusto
                 .where(
                         titleEq(search.getSearchTitle()),
                         hrCategoryEq(search.getHrCategory()),
-                        historyRecord.id.gt(id)
+                        historyRecord.id.gt(id),
+                        languageEq(search.getLanguage())
                 )
                 .limit(1)
                 .orderBy(historyRecord.id.asc())
@@ -70,13 +72,18 @@ public class HistoryRecordRepositoryImpl implements HistoryRecordRepositoryCusto
                 .where(
                         titleEq(search.getSearchTitle()),
                         hrCategoryEq(search.getHrCategory()),
-                        historyRecord.id.lt(id)
+                        historyRecord.id.lt(id),
+                        languageEq(search.getLanguage())
                 )
                 .limit(1)
                 .orderBy(historyRecord.id.desc())
                 .fetchOne();
 
         return nextRecord;
+    }
+
+    private BooleanExpression languageEq(String language) {
+        return language == null ? null : historyRecord.language.contains(language);
     }
 
     private BooleanExpression titleEq(String searchTitle) {

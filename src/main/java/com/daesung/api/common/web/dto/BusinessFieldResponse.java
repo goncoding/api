@@ -10,6 +10,6 @@ public class BusinessFieldResponse {
 
     private BusinessField businessField;
 
-    private BusinessDto businessDto;
+//    private BusinessDto businessDto;
 
 }

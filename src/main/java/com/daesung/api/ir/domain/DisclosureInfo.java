@@ -29,7 +29,7 @@ public class DisclosureInfo extends RegTimeEntity {
     private String diFileSavedName;
     @Column(length = 1024)
     private String diFileSavedPath;
-    private String regUser;
+//    private String regUser;
     private String language;
 
 

@@ -28,7 +28,6 @@ public class EditorFile extends RegTimeEntity {
     @Column(length = 1024)
     private String editFileSavedPath;
 
-    private String regUser;
 
 
 

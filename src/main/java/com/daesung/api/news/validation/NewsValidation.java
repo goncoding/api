@@ -1,6 +1,5 @@
 package com.daesung.api.news.validation;
 
-import com.daesung.api.events.EventDto;
 import com.daesung.api.news.web.dto.NewsDto;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;

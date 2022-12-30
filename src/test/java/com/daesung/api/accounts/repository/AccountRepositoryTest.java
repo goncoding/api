@@ -23,9 +23,14 @@ class AccountRepositoryTest extends BaseControllerTest {
 //        }
 
 
-        Optional<Account> byAcNum = accountRepository.findByAcNum("0002");
-        Account account = byAcNum.get();
-        System.out.println("account = " + account);
+//        Optional<Account> byAcNum = accountRepository.findByAcNum("0002");
+//        Account account = byAcNum.get();
+//        System.out.println("account = " + account);
+
+
+//        Account ds_art = accountRepository.findByAccountRole("DS_ART").get();
+//        System.out.println("ds_art = " + ds_art);
+
 
     }
 

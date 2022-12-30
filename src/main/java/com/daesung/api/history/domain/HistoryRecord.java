@@ -28,9 +28,11 @@ public class HistoryRecord extends BaseTimeEntity {
 
     private String hrCategoryName;
     private String hrTitle;
+
+    @Column(columnDefinition = "TEXT")
     private String hrContent;
-    private String regUser; //사번
-    private String updUser; //사번
+//    private String regUser; //사번
+//    private String updUser; //사번
     private String language;
 
 

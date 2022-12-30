@@ -1,6 +1,5 @@
 package com.daesung.api.news.web;
 
-import com.daesung.api.common.error.ErrorResource;
 import com.daesung.api.common.response.ErrorResponse;
 import com.daesung.api.news.upload.NewsFileStore;
 import com.daesung.api.news.upload.NewsThumbFileStore;
@@ -17,21 +16,18 @@ import com.daesung.api.news.resource.NewsResource;
 import com.daesung.api.news.validation.NewsValidation;
 import com.daesung.api.news.web.dto.NewsDto;
 import com.daesung.api.news.web.dto.NewsGetResponse;
-import com.daesung.api.news.web.dto.NewsListResponse;
 import com.daesung.api.utils.image.AccessLogUtil;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.NasFileComponent;
 import com.daesung.api.utils.upload.UploadFile;
-import com.querydsl.core.Tuple;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
@@ -56,6 +52,7 @@ import java.util.Optional;
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{lang}/news")
@@ -97,7 +94,8 @@ public class NewsController {
                                       @RequestParam(name = "size", required = false, defaultValue = "") String size) {
         //타입 검색 값 넣기
         NewsSearchCondition searchCondition = new NewsSearchCondition();
-
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        authentication.getPrincipal();
         if ("tit".equals(searchType)) {
             searchCondition.setSearchTitle(searchText);
         }
@@ -145,28 +143,31 @@ public class NewsController {
             @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "(뉴스&보도) 단건 등록 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
         newsValidation.validate(newsDto, errors);
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "(뉴스&보도) 단건 등록 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
         //뉴스
         if ("NE".equals(newsDto.getNbType())) {
             //문자열에서 html 태그 제거
-            String content = newsDto.getContent().replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "");
+//            String content = newsDto.getContent().replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "");
 
             newsDto.setViewCnt(0);
 
             News news = News.builder()
                     .nbType(NbType.NE)
                     .title(newsDto.getTitle())
-                    .content(content)
+                    .content(newsDto.getContent())
                     .viewCnt(newsDto.getViewCnt())
                     .selectRegDate(newsDto.getSelectRegDate())
                     .language(lang)
+                    .thumbnailFileSummary(newsDto.getThumbSummary())
                     .build();
 
             News savedNews = newsRepository.save(news);
@@ -179,6 +180,7 @@ public class NewsController {
                     UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
 
                     if (uploadFile.isWrongType()) {
+                        log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                         return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                     }
 
@@ -187,7 +189,7 @@ public class NewsController {
                             .thumbnailFileOriginalName(uploadFile.getOriginName())
                             .thumbnailFileSavedName(uploadFile.getNewName())
                             .thumbnailFileSavedPath(uploadFile.getRealPath())
-                            .thumbnailFileSummary(newsDto.getThumbSummary())
+//                            .thumbnailFileSummary(newsDto.getThumbSummary())
                             .build();
 
                     newsThumbnailFileRepository.save(newsThumbnailFile);
@@ -205,6 +207,7 @@ public class NewsController {
 
                     for (UploadFile uploadFile : uploadFiles) {
                         if (uploadFile.isWrongType()) {
+                            log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                             return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                         }
 
@@ -237,6 +240,7 @@ public class NewsController {
         if ("RE".equals(newsDto.getNbType())) {
 
             if (newsFiles != null) {
+                log.error("status = {}, message = {}", "400", "첨부파일은 뉴스만 가능합니다.");
                 return ResponseEntity.badRequest().body(new ErrorResponse("첨부파일은 뉴스만 가능합니다.","400"));
             }
 
@@ -250,6 +254,7 @@ public class NewsController {
                     .viewCnt(newsDto.getViewCnt())
                     .selectRegDate(newsDto.getSelectRegDate())
                     .language(lang)
+                    .thumbnailFileSummary(newsDto.getThumbSummary())
                     .build();
 
             News savedNews = newsRepository.save(news);
@@ -262,6 +267,7 @@ public class NewsController {
                     UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
 
                     if (uploadFile.isWrongType()) {
+                        log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                         return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                     }
 
@@ -270,7 +276,7 @@ public class NewsController {
                             .thumbnailFileOriginalName(uploadFile.getOriginName())
                             .thumbnailFileSavedName(uploadFile.getNewName())
                             .thumbnailFileSavedPath(uploadFile.getRealPath())
-                            .thumbnailFileSummary(newsDto.getThumbSummary())
+//                            .thumbnailFileSummary(newsDto.getThumbSummary())
                             .build();
 
                     newsThumbnailFileRepository.save(newsThumbnailFile);
@@ -280,15 +286,12 @@ public class NewsController {
                 }
             }
 
-
-
-
             URI uri = linkTo(NewsController.class, newsDto.getLanguage()).slash(savedNews.getId()).toUri();
             NewsResource newsResource = new NewsResource(savedNews);
 //            return null;
             return ResponseEntity.created(uri).body(newsResource);
         }
-
+        log.error("status = {}, message = {}", "400", "뉴스, 보도 타입을 확인해 주세요.");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("뉴스, 보도 타입을 확인해 주세요."));
     }
 
@@ -335,6 +338,7 @@ public class NewsController {
         } else {
             Optional<News> optionalNews = newsRepository.findById(id);
             if (!optionalNews.isPresent()) {
+                log.error("status = {}, message = {}", "404", "일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.","400"));
             }
             news = optionalNews.get();
@@ -381,10 +385,12 @@ public class NewsController {
 
         Optional<News> optionalNews = newsRepository.findById(id);
         if (!optionalNews.isPresent()) {
+            log.error("status = {}, message = {}", "404", "일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요."));
         }
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "(뉴스&보도) 단건 수정 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
@@ -404,10 +410,10 @@ public class NewsController {
             News savedNews = newsRepository.save(news);
 
             List<NewsThumbnailFile> thumbnailFiles = newsThumbnailFileRepository.findByNewsId(savedNews.getId());
-            for (NewsThumbnailFile file : thumbnailFiles) {
-                file.updateThumbnailSummary(newsDto.getThumbSummary());
-                newsThumbnailFileRepository.save(file);
-            }
+//            for (NewsThumbnailFile file : thumbnailFiles) {
+//                file.updateThumbnailSummary(newsDto.getThumbSummary());
+//                newsThumbnailFileRepository.save(file);
+//            }
 
             System.out.println("savedNews = " + savedNews);
 
@@ -417,6 +423,7 @@ public class NewsController {
 
                     UploadFile uploadFile = newsThumbFileStore.storeFile(thumbnailFile, savePath, thumbWhiteList, id);
                     if (uploadFile.isWrongType()) {
+                        log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                         return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                     }
 
@@ -441,6 +448,7 @@ public class NewsController {
 
                     for (UploadFile uploadFile : uploadFiles) {
                         if (uploadFile.isWrongType()) {
+                            log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                             return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                         }
                     }
@@ -501,10 +509,10 @@ public class NewsController {
             System.out.println("savedNews = " + savedNews);
 
             List<NewsThumbnailFile> thumbnailFiles = newsThumbnailFileRepository.findByNewsId(savedNews.getId());
-            for (NewsThumbnailFile file : thumbnailFiles) {
-                file.updateThumbnailSummary(newsDto.getThumbSummary());
-                newsThumbnailFileRepository.save(file);
-            }
+//            for (NewsThumbnailFile file : thumbnailFiles) {
+//                file.updateThumbnailSummary(newsDto.getThumbSummary());
+//                newsThumbnailFileRepository.save(file);
+//            }
 
             //보도 섬네일 업로드
             if (thumbnailFile != null) {
@@ -512,6 +520,7 @@ public class NewsController {
 
                     UploadFile uploadFile = newsThumbFileStore.storeFile(thumbnailFile, savePath, thumbWhiteList, id);
                     if (uploadFile.isWrongType()) {
+                        log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                         return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                     }
 
@@ -535,7 +544,7 @@ public class NewsController {
             return ResponseEntity.ok(newsResource);
         }
 
-
+        log.error("status = {}, message = {}", "400", "뉴스, 보도 타입을 확인해 주세요.");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("뉴스, 보도 타입을 확인해 주세요."));
 
     }
@@ -551,6 +560,7 @@ public class NewsController {
 
         Optional<News> optionalNews = newsRepository.findById(id);
         if (!optionalNews.isPresent()) {
+            log.error("status = {}, message = {}", "404", "일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요."));
         }
 
@@ -602,6 +612,7 @@ public class NewsController {
             List<NewsThumbnailFile> thumbList = newsThumbnailFileRepository.findByNewsIdOrderByRegDateDesc(newsId);
 
             if (thumbList == null || thumbList.size() == 0) {
+                log.error("status = {}, message = {}", "404", "일치하는 썸네일 정보가 없습니다. 사용자 id를 확인해주세요.");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 썸네일 정보가 없습니다. 사용자 id를 확인해주세요."));
             }
             NewsThumbnailFile newsThumbnailFile = thumbList.get(0);
@@ -610,6 +621,7 @@ public class NewsController {
             File serverFile = new File(pathname);
             NasFileComponent.putFileToResponseStreamAsView(response, serverFile);
         }
+        log.error("status = {}, message = {}", "404", "일치하는 썸네일 정보가 없습니다. 사용자 id를 확인해주세요.");
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 썸네일 정보가 없습니다. 사용자 id를 확인해주세요."));
     }
 
@@ -625,6 +637,7 @@ public class NewsController {
 
         Optional<News> optionalNews = newsRepository.findById(id);
         if (!optionalNews.isPresent()) {
+            log.error("status = {}, message = {}", "404", "일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 회원 정보가 없습니다. 사용자 id를 확인해주세요."));
         }
         News news = optionalNews.get();
@@ -684,11 +697,6 @@ public class NewsController {
 //        }
 //        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 썸네일 정보가 없습니다. 사용자 id를 확인해주세요."));
 //    }
-
-    private ResponseEntity<ErrorResource> badRequest(Errors errors) {
-        return ResponseEntity.badRequest().body(new ErrorResource(errors));
-    }
-
 
 
 

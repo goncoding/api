@@ -1,6 +1,7 @@
 package com.daesung.api.history.domain;
 
 import com.daesung.api.history.web.dto.HistoryDetailDto;
+import com.daesung.api.utils.date.BaseTimeEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -15,7 +16,7 @@ import javax.persistence.*;
 @ToString(exclude = "history")
 @Builder
 @Table(name = "ds_history_detail")
-public class HistoryDetail {
+public class HistoryDetail extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +28,7 @@ public class HistoryDetail {
     private String content;
     private Integer hdSequence;
     private String language;
-    private String regUser;
+//    private String regUser;
     private String updUser;
 
     @JsonIgnore

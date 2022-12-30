@@ -19,8 +19,8 @@ public class EthicalReportListResource extends EntityModel<EthicalReport> {
 
     public EthicalReportListResource(EthicalReport content, Link... links) {
         super(content, links);
-        add(linkTo(methodOn(EthicalReportController.class).ethicalGet(content.getId(), content.getLanguage())).withRel("get-ethical"));
-        add(linkTo(methodOn(EthicalReportController.class).getManager(content.getId(), content.getLanguage())).withRel("get-manager"));
+        add(linkTo(methodOn(EthicalReportController.class).ethicalGet(content.getId(), content.getLanguage(), null)).withRel("get-ethical"));
+//        add(linkTo(methodOn(EthicalReportController.class).getManager(content.getId(), content.getLanguage())).withRel("get-manager"));
     }
 
 

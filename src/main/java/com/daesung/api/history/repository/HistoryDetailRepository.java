@@ -3,14 +3,22 @@ package com.daesung.api.history.repository;
 import com.daesung.api.history.domain.History;
 import com.daesung.api.history.domain.HistoryDetail;
 import com.daesung.api.history.web.dto.HistoryDetailDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface HistoryDetailRepository extends JpaRepository<HistoryDetail, Long> {
 
     HistoryDetail findByHdSequence(Integer sequence);
+
+    Optional<HistoryDetail> findByIdAndLanguage(Long id, String lang);
+
+    Page<HistoryDetail> findByLanguage(String lang, Pageable pageable);
 
     HistoryDetail findByHdYearAndHdMonthAndHdSequence(String year, String month, Integer sequence);
 

@@ -31,7 +31,10 @@ public class News extends BaseTimeEntity {
     private NbType nbType; //NE("뉴스"), RE("보도");
 
     private String title;
+
+    @Column(columnDefinition = "TEXT")
     private String content;
+
     @Column(columnDefinition = "integer default 0", nullable = false)
     private Integer viewCnt;
     private String newCompany; //회사명
@@ -46,9 +49,11 @@ public class News extends BaseTimeEntity {
     private List<NewsThumbnailFile> newsThumbnailFiles;
 
     private String language;
-    private String regUser;
+//    private String regUser;
 
     private String updUser;
+
+    private String thumbnailFileSummary;
 
     private LocalDate selectRegDate; //작성일 추가
 
@@ -61,6 +66,7 @@ public class News extends BaseTimeEntity {
         this.title = newsDto.getTitle();
         this.content = newsDto.getContent();
         this.selectRegDate = newsDto.getSelectRegDate();
+        this.thumbnailFileSummary = newsDto.getThumbSummary();
     }
 
 
@@ -72,5 +78,6 @@ public class News extends BaseTimeEntity {
         this.newCompany = newsDto.getNewCompany();
         this.link = newsDto.getLink();
         this.selectRegDate = newsDto.getSelectRegDate();
+        this.thumbnailFileSummary = newsDto.getThumbSummary();
     }
 }

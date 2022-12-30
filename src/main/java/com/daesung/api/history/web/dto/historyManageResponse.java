@@ -20,7 +20,7 @@ public class historyManageResponse {
     private List<String> contentList;
     private Integer hdSequence;
     private String language;
-    private String regUser;
+//    private String regUser;
     private String updUser;
 
 

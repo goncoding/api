@@ -12,6 +12,7 @@ import com.daesung.api.ir.resource.IrYearResource;
 import com.daesung.api.ir.web.dto.IrYearDto;
 import com.daesung.api.ir.web.dto.IrYearUpdateDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,7 @@ import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{lang}/ir-year")
@@ -74,6 +76,7 @@ public class IrYearController {
 
         Optional<IrYear> optionalIrYear = irYearRepository.findById(id);
         if (!optionalIrYear.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 IR 연도 정보가 없습니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 IR 연도 정보가 없습니다.", "400"));
         }
 
@@ -95,17 +98,19 @@ public class IrYearController {
                                        @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "IR_연도관리 등록 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
         Optional<IrYear> optionalIrYear = irYearRepository.findByIyYear(irYearDto.getIyYear());
         if (optionalIrYear.isPresent()) {
+            log.error("status = {}, message = {}", "400", "연도가 중복됩니다. 변경 해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("연도가 중복됩니다. 변경 해주세요.", "400"));
         }
 
         IrYear irYear = IrYear.builder()
                 .iyYear(irYearDto.getIyYear())
-                .regUser(irYearDto.getRegUser())
+//                .regUser(irYearDto.getRegUser())
                 .language(lang)
                 .build();
 
@@ -124,12 +129,14 @@ public class IrYearController {
 
         Optional<IrYear> optionalIrYear = irYearRepository.findById(id);
         if (!optionalIrYear.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 IR 연도 정보가 없습니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 IR 연도 정보가 없습니다.", "400"));
         }
         IrYear irYear = optionalIrYear.get();
 
         Optional<IrYear> yearOptional = irYearRepository.findByIyYear(updateDto.getIyYear());
         if (yearOptional.isPresent()) {
+            log.error("status = {}, message = {}", "400", "연도가 중복됩니다. 변경 해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("연도가 중복됩니다. 변경 해주세요.", "400"));
         }
 
@@ -149,14 +156,22 @@ public class IrYearController {
 
         Optional<IrYear> optionalIrYear = irYearRepository.findById(id);
         if (!optionalIrYear.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 IR 연도 정보가 없습니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 IR 연도 정보가 없습니다.", "400"));
         }
         IrYear irYear = optionalIrYear.get();
 
         List<IrInfo> irInfoList = irInfoRepository.findByIrYear(id);
-        if (irInfoList != null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("자료관리에 "+irYear.getIyYear()+"년도 자료가 남아있습니다. 삭제 후 진행 해주세요.","500"));
+        for (IrInfo irInfo : irInfoList) {
+            if (irInfo != null) {
+                log.error("status = {}, message = 자료관리에 {}년도 자료가 남아있습니다. 삭제 후 진행 해주세요.", "400", irYear.getIyYear());
+                return ResponseEntity.badRequest().body(new ErrorResponse("자료관리에 "+irYear.getIyYear()+"년도 자료가 남아있습니다. 삭제 후 진행 해주세요.","400"));
+            }
         }
+
+//        if (irInfoList != null) {
+//            return ResponseEntity.badRequest().body(new ErrorResponse("자료관리에 "+irYear.getIyYear()+"년도 자료가 남아있습니다. 삭제 후 진행 해주세요.","400"));
+//        }
 
         irYearRepository.deleteById(irYear.getId());
 

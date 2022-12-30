@@ -70,7 +70,7 @@ public class NasFileComponent {
 			IOUtils.copy(fileInputStream, response.getOutputStream());
 			response.flushBuffer();
 		} catch (IOException e) {
-			log.info("Database entry is set but file is not found on server {}", file.getAbsolutePath());
+			log.error("Database entry is set but file is not found on server {}", file.getAbsolutePath());
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not exists on the server");
 		}
 	}

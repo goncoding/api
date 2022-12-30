@@ -19,18 +19,22 @@ class HistoryRecordRepositoryTest extends BaseControllerTest {
     @Test
     public void _테스트() throws Exception{
 
-        Search search = Search.builder()
-                .searchType("tit")
-                .searchTitle("01")
-                .hrCategory(HrCategory.NA)
-                .build();
+//        Search search = Search.builder()
+//                .searchType("tit")
+//                .searchTitle("01")
+//                .hrCategory(HrCategory.NA)
+//                .build();
+//
+//        HistoryRecord prevRecord = historyRecordRepository.searchPrevRecord(21L, search);
+//        System.out.println("prevRecord = " + prevRecord);
+//        System.out.println("###########################");
+//        System.out.println("###########################");
+//        HistoryRecord nextRecord = historyRecordRepository.searchNextRecord(21L, search);
+//        System.out.println("nextRecord = " + nextRecord);
 
-        HistoryRecord prevRecord = historyRecordRepository.searchPrevRecord(21L, search);
-        System.out.println("prevRecord = " + prevRecord);
-        System.out.println("###########################");
-        System.out.println("###########################");
-        HistoryRecord nextRecord = historyRecordRepository.searchNextRecord(21L, search);
-        System.out.println("nextRecord = " + nextRecord);
+
+//        HistoryRecord en = historyRecordRepository.findByIdAndLanguage(88L, "kr");
+//        System.out.println("en = " + en);
 
     }
 

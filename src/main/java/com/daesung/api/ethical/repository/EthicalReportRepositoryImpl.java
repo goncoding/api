@@ -1,9 +1,11 @@
 package com.daesung.api.ethical.repository;
 
+import com.daesung.api.accounts.domain.enumType.AccountRole;
 import com.daesung.api.ethical.domain.EthicalReport;
 import com.daesung.api.ethical.repository.condition.EthicalSearchCondition;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
+import static com.daesung.api.contact.domain.QContactUs.contactUs;
 import static com.daesung.api.ethical.domain.QEthicalReport.*;
 
 @RequiredArgsConstructor
@@ -40,21 +43,16 @@ public class EthicalReportRepositoryImpl implements EthicalReportRepositoryCusto
         return new PageImpl<>(content, pageable, total);
     }
 
-//    private Object EthicalSort(Pageable pageable) {
-//        return null;
-//    }
-
-    private Predicate nameEq(String searchName) {
+    private BooleanExpression nameEq(String searchName) {
         return searchName == null ? null : ethicalReport.erName.contains(searchName);
     }
 
-    private Predicate textEq(String searchText) {
+    private BooleanExpression textEq(String searchText) {
         return searchText == null ? null : ethicalReport.erContent.contains(searchText);
     }
 
-    private Predicate mnNameEq(String searchMnName) {
-        return searchMnName == null ? null : ethicalReport.manager.mnName.contains(searchMnName);
+    private BooleanExpression mnNameEq(String searchMnName) {
+        return searchMnName == null ? null : ethicalReport.mnName.contains(searchMnName);
     }
-
 
 }

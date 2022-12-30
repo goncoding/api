@@ -9,6 +9,7 @@ import com.daesung.api.ir.web.dto.IrInfoDto;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,7 @@ import java.util.Optional;
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static com.daesung.api.utils.upload.UploadUtil.UPLOAD_PATH;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{lang}/esg")
@@ -87,6 +89,7 @@ public class EsgController {
             try {
                 UploadFile uploadFile = fileStore.storeFile(attachFile, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.error("status = {}, message = {}", "400", "확장자(pdf), 사이즈(10MB)를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("확장자(pdf), 사이즈(10MB)를 확인 해주세요.", "400"));
                 }
 
@@ -114,6 +117,7 @@ public class EsgController {
 
         Optional<Esg> optionalEsg = esgRepository.findById(id);
         if (!optionalEsg.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 ESG 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 ESG 정보가 없습니다. id를 확인해주세요.","400"));
         }
         Esg esg = optionalEsg.get();
@@ -123,6 +127,7 @@ public class EsgController {
             try {
                 UploadFile uploadFile = esgThumbFileStore.storeFile(attachFile, savePath, whiteList, id);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "확장자(pdf), 사이즈(10MB)를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("확장자(pdf), 사이즈(10MB)를 확인 해주세요.", "400"));
                 }
 
@@ -136,6 +141,7 @@ public class EsgController {
                 return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(), "500 (IOException)"));
             }
         } else {
+            log.info("status = {}, message = {}", "400", "수정 시 파일첨부는 필수입니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("수정 시 파일첨부는 필수입니다.","400"));
         }
     }
@@ -148,6 +154,7 @@ public class EsgController {
 
         Optional<Esg> optionalEsg = esgRepository.findById(id);
         if (!optionalEsg.isPresent()) {
+            log.info("status = {}, message = {}", "400", "일치하는 ESG 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 ESG 정보가 없습니다. id를 확인해주세요.","400"));
         }
         Esg esg = optionalEsg.get();

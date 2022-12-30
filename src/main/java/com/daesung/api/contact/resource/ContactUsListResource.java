@@ -14,10 +14,10 @@ public class ContactUsListResource extends EntityModel<ContactUs> {
 
     public ContactUsListResource(ContactUs contactUs, Link... links) {
         super(contactUs, links);
-        add(linkTo(methodOn(ContactUsController.class).contactGet(contactUs.getId(), contactUs.getLanguage())).withSelfRel());
+//        add(linkTo(methodOn(ContactUsController.class).contactGet(contactUs.getId(), contactUs.getLanguage(), null)).withSelfRel());
 //        add(linkTo(methodOn(ManagerController.class).getManager(contactUs.getManager().getMnNum(), contactUs.getLanguage())).withRel("get-manager"));
-        add(linkTo(methodOn(ContactUsController.class).getManager(contactUs.getId(),contactUs.getLanguage())).withRel("get-manager(cu_id)"));
-        add(linkTo(methodOn(BusinessFieldController.class).businessFieldNumGet(contactUs.getBusinessField().getBusFieldNum(),contactUs.getLanguage())).withRel("get-businessField(busFieldNum)"));
+//        add(linkTo(methodOn(ContactUsController.class).getManager(contactUs.getId(),contactUs.getLanguage())).withRel("get-manager(cu_id)"));
+
 
     }
 }

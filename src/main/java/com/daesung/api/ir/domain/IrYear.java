@@ -25,7 +25,6 @@ public class IrYear extends RegTimeEntity {
     @Column(name = "iy_id")
     private Long id;
     private String iyYear;
-    private String regUser;
     private String language;
 
     @JsonIgnore

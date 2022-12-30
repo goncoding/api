@@ -36,19 +36,19 @@ class ManagerTest extends BaseControllerTest {
 //
 //        managerRepository.save(manager01);
 
-        Manager manager01 = Manager.builder()
-                .mnNum("1105")
-                .mnName("김상수")
-//                .mnCategory(MnCategory.DS_RELAY)
-                .mnCategory("윤리경영신고")
-                .mnDepartment("감사실")
-                .mnPosition("대리")
-                .mnPhone("010-2222-3333")
-                .mnEmail("aaa@email.com")
-                .businessField(businessField01)
-                .build();
-
-        managerRepository.save(manager01);
+//        Manager manager01 = Manager.builder()
+//                .mnNum("1105")
+//                .mnName("김상수")
+////                .mnCategory(MnCategory.DS_RELAY)
+//                .mnCategory("윤리경영신고")
+//                .mnDepartment("감사실")
+//                .mnPosition("대리")
+//                .mnPhone("010-2222-3333")
+//                .mnEmail("aaa@email.com")
+//                .businessField(businessField01)
+//                .build();
+//
+//        managerRepository.save(manager01);
 
     }
 
@@ -65,7 +65,7 @@ class ManagerTest extends BaseControllerTest {
                 .mnNum("1101")
                 .mnName("직원01")
 //                .mnCategory(MnCategory.DS_RELAY)
-                .mnDepartment("부서01")
+//                .mnDepartment("부서01")
                 .mnPosition("대리")
                 .mnPhone("010-2222-3333")
                 .mnEmail("aaa@email.com")
@@ -76,7 +76,7 @@ class ManagerTest extends BaseControllerTest {
                 .mnNum("1102")
                 .mnName("직원02")
 //                .mnCategory(MnCategory.DS_POWER)
-                .mnDepartment("부서02")
+//                .mnDepartment("부서02")
                 .mnPosition("과장")
                 .mnPhone("010-545-4533")
                 .mnEmail("bbb@email.com")
@@ -87,7 +87,7 @@ class ManagerTest extends BaseControllerTest {
                 .mnNum("1103")
                 .mnName("직원03")
 //                .mnCategory(MnCategory.DS_ENERGY)
-                .mnDepartment("부서03")
+//                .mnDepartment("부서03")
                 .mnPosition("차장")
                 .mnPhone("010-2233-444")
                 .mnEmail("ccc@email.com")

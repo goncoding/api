@@ -34,7 +34,7 @@ public class NewsFile extends RegTimeEntity {
     private String newsFileSavedPath;
     @Column(length = 512)
     private String newsFileSavedName;
-    private String regUser;
+//    private String regUser;
 
     @Enumerated(EnumType.STRING)
     private ShowYn showYn;

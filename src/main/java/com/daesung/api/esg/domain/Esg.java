@@ -1,5 +1,6 @@
 package com.daesung.api.esg.domain;
 
+import com.daesung.api.utils.date.BaseTimeEntity;
 import com.daesung.api.utils.date.RegTimeEntity;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.*;
@@ -15,7 +16,7 @@ import javax.persistence.*;
 @ToString
 @Builder
 @Table(name = "ds_esg")
-public class Esg extends RegTimeEntity {
+public class Esg extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +30,6 @@ public class Esg extends RegTimeEntity {
     private String esgFileSavedName;
     @Column(length = 1024)
     private String esgFileSavedPath;
-    private String regUser;
     private String language;
 
 

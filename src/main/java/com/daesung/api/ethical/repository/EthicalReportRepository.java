@@ -12,11 +12,11 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface EthicalReportRepository extends JpaRepository<EthicalReport, Long>, EthicalReportRepositoryCustom {
 
-    @Query("select er,mn " +
-            "from EthicalReport er " +
-            "left join fetch er.manager mn " +
-            "where er.id = :id")
-    EthicalUpdateResponseDto findEthicalReportAndManager(Long id);
+//    @Query("select er,mn " +
+//            "from EthicalReport er " +
+//            "left join fetch er.manager mn " +
+//            "where er.id = :id")
+//    EthicalUpdateResponseDto findEthicalReportAndManager(Long id);
 
     Page<EthicalReport> searchEthicalList(EthicalSearchCondition searchCondition, Pageable pageable);
 }

@@ -14,6 +14,7 @@ import com.daesung.api.utils.search.SearchDto;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,7 @@ import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{lang}/history/record")
@@ -70,7 +72,7 @@ public class HistoryRecordController {
                                      @RequestParam(name = "size", required = false, defaultValue = "") Integer size,
                                      @PathVariable(name = "lang", required = true) String lang) {
 
-        Search search = getSearch(searchType, searchText, recordType);
+        Search search = getSearch(searchType, searchText, recordType, lang);
 
         Page<HistoryRecord> historyRecords = historyRecordRepository.searchRecordList(search, pageable);
 
@@ -102,14 +104,15 @@ public class HistoryRecordController {
                                     @RequestParam(name = "size", required = false) Integer size,
                                     @PathVariable(name = "lang", required = true) String lang) {
 
-        Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
+        Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistoryRecord.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
+            log.error("status = {}, message = {}", "400", "일치하는 히스토리 정보가 없습니다. id, 언어를 확인해주세요.");
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id, 언어를 확인해주세요.","400"));
         }
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();
 
-        Search search = getSearch(searchType, searchText, recordType);
+        Search search = getSearch(searchType, searchText, recordType, lang);
 
         HistoryRecord prevRecord = historyRecordRepository.searchPrevRecord(id, search);
         HistoryRecord nextRecord = historyRecordRepository.searchNextRecord(id, search);
@@ -140,6 +143,7 @@ public class HistoryRecordController {
 
         Optional<HistoryRecordFile> optionalRecordFile = historyRecordFileRepository.findById(id);
         if (!optionalRecordFile.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 파일 정보가 없습니다. 파일 id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 파일 정보가 없습니다. 파일 id를 확인해주세요.","400"));
         }
         HistoryRecordFile recordFile = optionalRecordFile.get();
@@ -157,6 +161,7 @@ public class HistoryRecordController {
 
         Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
         if (!optionalHistoryRecord.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 히스토리 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
         }
 
@@ -181,6 +186,7 @@ public class HistoryRecordController {
             @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "히스토리 등록 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
@@ -188,14 +194,14 @@ public class HistoryRecordController {
 
         //NEW_YEAR_ADDRESS("신년사"), COMMEMORATIVE("기념사"), CI("CI");
         HrCategory enumCategory = getEnumCategory(recordDto);
-        String description = enumCategory.getDescription();
         if (enumCategory == null) {
+            log.error("status = {}, message = {}", "400", "히스토리 카테고리가 null입니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("히스토리 카테고리가 null입니다.", "400"));
         }
 
         HistoryRecord historyRecord = HistoryRecord.builder()
                 .hrCategory(enumCategory)
-                .hrCategoryName(description)
+                .hrCategoryName(recordDto.getHrCategoryName())
                 .hrTitle(recordDto.getHrTitle())
                 .hrContent(recordDto.getHrContent())
                 .language(lang)
@@ -209,6 +215,7 @@ public class HistoryRecordController {
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile01, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -232,6 +239,7 @@ public class HistoryRecordController {
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile02, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -255,6 +263,7 @@ public class HistoryRecordController {
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile03, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -278,6 +287,7 @@ public class HistoryRecordController {
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile04, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -301,6 +311,7 @@ public class HistoryRecordController {
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile05, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -345,12 +356,14 @@ public class HistoryRecordController {
 
         List<HistoryRecordFile> recordFileList = new ArrayList<>();
 
-        Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
+        Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistoryRecord.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
+            log.info("status = {}, message = {}", "400", "일치하는 히스토리 정보가 없습니다. id, 언어를 확인해주세요.");
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id, 언어를 확인해주세요.","400"));
         }
 
         if (errors.hasErrors()) {
+            log.info("status = {}, message = {}", "400", "히스토리 수정 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
@@ -363,6 +376,7 @@ public class HistoryRecordController {
         HrCategory enumCategory = getEnumCategory(recordDto);
         String description = enumCategory.getDescription();
         if (enumCategory == null) {
+            log.info("status = {}, message = {}", "400", "히스토리 카테고리는 필수입니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("히스토리 카테고리는 필수입니다.", "400"));
         }
 
@@ -378,11 +392,13 @@ public class HistoryRecordController {
 
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "01");
                 if (fileOptional.isPresent()) {
+                    log.info("status = {}, message = {}", "400", "1번 첨부파일이 존재합니다. 삭제 후 진행하세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("1번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile01, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -407,11 +423,13 @@ public class HistoryRecordController {
 
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "02");
                 if (fileOptional.isPresent()) {
+                    log.info("status = {}, message = {}", "400", "2번 첨부파일이 존재합니다. 삭제 후 진행하세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("2번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile02, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -435,11 +453,13 @@ public class HistoryRecordController {
             try {
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "03");
                 if (fileOptional.isPresent()) {
+                    log.info("status = {}, message = {}", "400", "3번 첨부파일이 존재합니다. 삭제 후 진행하세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("3번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile03, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -463,11 +483,13 @@ public class HistoryRecordController {
             try {
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "04");
                 if (fileOptional.isPresent()) {
+                    log.info("status = {}, message = {}", "400", "4번 첨부파일이 존재합니다. 삭제 후 진행하세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("4번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile04, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -491,11 +513,13 @@ public class HistoryRecordController {
             try {
                 Optional<HistoryRecordFile> fileOptional = historyRecordFileRepository.findByHrIdAndSeq(savedRecord.getId(), "05");
                 if (fileOptional.isPresent()) {
+                    log.info("status = {}, message = {}", "400", "5번 첨부파일이 존재합니다. 삭제 후 진행하세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("5번 첨부파일이 존재합니다. 삭제 후 진행하세요.","400"));
                 }
 
                 UploadFile uploadFile = fileStore.storeFile(attachFile05, savePath, whiteList);
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -531,9 +555,9 @@ public class HistoryRecordController {
     public ResponseEntity recordDelete(@PathVariable(name = "id") Long id,
                                        @PathVariable(name = "lang") String lang) {
 
-        Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findById(id);
+        Optional<HistoryRecord> optionalHistoryRecord = historyRecordRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistoryRecord.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id를 확인해주세요.","400"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 히스토리 정보가 없습니다. id, 언어를 확인해주세요.","400"));
         }
 
         HistoryRecord historyRecord = optionalHistoryRecord.get();
@@ -614,10 +638,11 @@ public class HistoryRecordController {
         return null;
     }
 
-    private static Search getSearch(String searchType, String searchText, String recordType) {
+    private static Search getSearch(String searchType, String searchText, String recordType, String lang) {
         Search search = new Search();
         search.setSearchType(searchType);
         search.setSearchText(searchText);
+        search.setLanguage(lang);
 
         if ("tit".equals(searchType)) {
             search.setSearchTitle(searchText);
@@ -631,6 +656,7 @@ public class HistoryRecordController {
         if ("CI".equals(recordType)) {
             search.setHrCategory(HrCategory.CI);
         }
+
         return search;
     }
 

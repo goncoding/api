@@ -1,5 +1,6 @@
 package com.daesung.api.ethical.repository.condition;
 
+import com.daesung.api.accounts.domain.enumType.AccountRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,6 @@ public class EthicalSearchCondition {
 
     private String page;
     private String size;
-
+    private AccountRole currentRole;
 
 }

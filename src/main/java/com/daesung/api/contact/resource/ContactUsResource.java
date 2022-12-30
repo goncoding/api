@@ -12,6 +12,6 @@ public class ContactUsResource extends EntityModel<ContactUs> {
 
     public ContactUsResource(ContactUs contactUs, Link... links) {
         super(contactUs, links);
-        add(linkTo(methodOn(ContactUsController.class).contactGet(contactUs.getId(), contactUs.getLanguage())).withSelfRel());
+//        add(linkTo(methodOn(ContactUsController.class).contactGet(contactUs.getId(), contactUs.getLanguage(),null)).withSelfRel());
     }
 }

@@ -1,5 +1,6 @@
 package com.daesung.api.contact.repository;
 
+import com.daesung.api.accounts.domain.enumType.AccountRole;
 import com.daesung.api.contact.domain.ContactUs;
 import com.daesung.api.contact.repository.condition.ContactSearchCondition;
 import com.querydsl.core.QueryResults;
@@ -32,7 +33,8 @@ public class ContactUsRepositoryImpl implements ContactUsRepositoryCustom{
                         nameEq(condition.getSearchName()),
                         textEq(condition.getSearchText()),
                         busFieldNameEq(condition.getSearchFieldName()),
-                        mnNameEq(condition.getSearchMnName())
+                        mnNameEq(condition.getSearchMnName()),
+                        accountRoleEq(condition.getCurrentRole())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -64,6 +66,13 @@ public class ContactUsRepositoryImpl implements ContactUsRepositoryCustom{
         return new OrderSpecifier<>(Order.DESC,contactUs.id);
     }
 
+    private BooleanExpression accountRoleEq(AccountRole currentRole) {
+        if ("PERSON".equals(currentRole.name()) || "ADMIN".equals(currentRole.name())) {
+             return null;
+        }
+        return currentRole == null ? null : contactUs.accountRole.eq(currentRole);
+    }
+
     private BooleanExpression nameEq(String searchName) {
         return searchName == null ? null : contactUs.cuName.contains(searchName);
     }
@@ -73,11 +82,11 @@ public class ContactUsRepositoryImpl implements ContactUsRepositoryCustom{
     }
 
     private BooleanExpression busFieldNameEq(String searchFieldName) {
-        return searchFieldName == null ? null : contactUs.businessField.busFieldName.contains(searchFieldName);
+        return searchFieldName == null ? null : contactUs.businessFieldName.contains(searchFieldName);
     }
 
     private BooleanExpression mnNameEq(String searchMnName) {
-        return searchMnName == null ? null : contactUs.manager.mnName.contains(searchMnName);
+        return searchMnName == null ? null : contactUs.mnName.contains(searchMnName);
     }
 
 }

@@ -29,6 +29,6 @@ public class PopupDto {
     private String sequence;
 
     private String fileSummary;
-    private String regUser;
+//    private String regUser;
 
 }

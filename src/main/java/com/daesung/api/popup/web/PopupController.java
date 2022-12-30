@@ -13,6 +13,7 @@ import com.daesung.api.utils.search.Search;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,7 @@ import java.util.Optional;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{lang}/popup")
@@ -87,6 +89,7 @@ public class PopupController {
 
         Optional<Popup> optionalPopup = popupRepository.findById(id);
         if (!optionalPopup.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 팝업 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 팝업 정보가 없습니다. id를 확인해주세요.","400"));
         }
         Popup popup = optionalPopup.get();
@@ -125,6 +128,7 @@ public class PopupController {
                 popup.changeFileInfo(uploadFile, popupDto);
 
                 if (uploadFile.isWrongType()) {
+                    log.error("status = {}, message = {}", "400", "파일명, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("확장자, 파일명, 사이즈를 확인 해주세요.", "400"));
                 }
 
@@ -134,6 +138,7 @@ public class PopupController {
         } else {
 
             if (popupDto.getFileSummary() != null) {
+                log.info("status = {}, message = {}", "400", "이미지 설명은 파일 업로드 후 등록 해주세요.");
                 return ResponseEntity.badRequest().body(new ErrorResponse("이미지 설명은 파일 업로드 후 등록 해주세요.", "400"));
             }
         }
@@ -156,6 +161,7 @@ public class PopupController {
 
         Optional<Popup> optionalPopup = popupRepository.findById(id);
         if (!optionalPopup.isPresent()) {
+            log.info("status = {}, message = {}", "400", "일치하는 팝업 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 팝업 정보가 없습니다. id를 확인해주세요.","400"));
         }
         Popup popup = optionalPopup.get();
@@ -177,6 +183,7 @@ public class PopupController {
                 popup.changeFileInfo(uploadFile, popupDto);
 
                 if (uploadFile.isWrongType()) {
+                    log.info("status = {}, message = {}", "400", "파일명, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("확장자, 파일명, 사이즈를 확인 해주세요.", "400"));
                 }
 
@@ -199,6 +206,7 @@ public class PopupController {
 
         Optional<Popup> optionalPopup = popupRepository.findById(id);
         if (!optionalPopup.isPresent()) {
+            log.info("status = {}, message = {}", "400", "일치하는 팝업 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 팝업 정보가 없습니다. id를 확인해주세요.","400"));
         }
 

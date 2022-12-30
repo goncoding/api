@@ -12,8 +12,6 @@ import javax.validation.constraints.NotNull;
 public class ContactUsUpdateDto {
 
 
-    @NotBlank(message = "사업분야 선택은 필수입니다.")
-    private String busFieldNum;
     @NotBlank(message = "성함은 필수입니다.")
     private String cuName;
     @NotBlank(message = "이메일은 필수입니다.")
@@ -23,9 +21,13 @@ public class ContactUsUpdateDto {
     private String cuPhone;
     @NotBlank(message = "문의내용은 필수입니다.")
     private String cuContent;
+    @NotBlank(message = "확인 여부는 필수입니다.")
     private String cuCheck;
-    private String cuAnswer;
     private String mnNum;
+    @NotBlank(message = "담당자명은 필수입니다.")
+    private String mnName;
+    @NotBlank(message = "답변 내용은 필수입니다.")
+    private String cuAnswer;
     private String cuMemo;
     private String busFieldName;
 

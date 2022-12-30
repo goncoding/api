@@ -10,6 +10,7 @@ import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.NasFileComponent;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 import static com.daesung.api.utils.upload.UploadUtil.UPLOAD_PATH;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class UploadController {
@@ -35,9 +37,7 @@ public class UploadController {
     private final FileStore fileStore;
     private final EditorFileRepository editorFileRepository;
 
-
     String whiteList = "jpg,gif,png,hwp,pdf,pptx,ppt,xlsx,xls,xps,zip";
-
 
     /**
      * 파일 이미지 보이기
@@ -71,6 +71,7 @@ public class UploadController {
                 UploadFile uploadFile = fileStore.storeFile(editorFile, savePath, whiteList);
 
                 if (uploadFile.isWrongType()) {
+                    log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
 
@@ -89,6 +90,7 @@ public class UploadController {
             }
 
         } else {
+            log.error("status = {}, message = {}", "400", "에디터 첨부파일을 등록 해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("에디터 첨부파일을 등록 해주세요.","400"));
         }
     }
@@ -102,6 +104,7 @@ public class UploadController {
 
         Optional<EditorFile> optionalEditorFile = editorFileRepository.findById(id);
         if (!optionalEditorFile.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 에디터 첨부파일 정보가 없습니다. id를 확인해주세요.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 에디터 첨부파일 정보가 없습니다. id를 확인해주세요.","400"));
         }
 

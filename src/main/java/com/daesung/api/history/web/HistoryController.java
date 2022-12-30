@@ -1,5 +1,6 @@
 package com.daesung.api.history.web;
 
+import com.daesung.api.common.domain.enumType.EditorFile;
 import com.daesung.api.common.response.ErrorResponse;
 import com.daesung.api.history.domain.History;
 import com.daesung.api.history.domain.HistoryDetail;
@@ -12,12 +13,14 @@ import com.daesung.api.history.web.dto.*;
 import com.daesung.api.utils.upload.FileStore;
 import com.daesung.api.utils.upload.UploadFile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
@@ -31,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import javax.validation.Valid;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +42,7 @@ import java.util.stream.Collectors;
 
 import static com.daesung.api.utils.api.ApiUtils.CHARSET_UTF8;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{lang}/history")
@@ -49,9 +53,6 @@ public class HistoryController {
 
     String savePath = "/history";
     String thumbWhiteList = "jpg, gif, png";
-
-
-
 
     private final FileStore fileStore;
     private final HistoryRepository historyRepository;
@@ -65,9 +66,9 @@ public class HistoryController {
                                                      @PathVariable(name = "lang") String lang) {
 
 
-
         Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
         if (!optionalHistoryDetail.isPresent()) {
+            log.error("status = {}, message = {}", "400", "일치하는 연혁 세부 정보가 없습니다.");
             return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
         }
 
@@ -78,6 +79,7 @@ public class HistoryController {
         return null;
     }
 
+    //todo (테스트 필요)assembler 태워서
     /**
      * 연혁 리스트 조회
      */
@@ -88,8 +90,16 @@ public class HistoryController {
                                          @RequestParam(name = "size", required = false, defaultValue = "") String size,
                                          @PathVariable(name = "lang", required = true) String lang) {
 
-        PageRequest request = PageRequest.of(0, 9999);
-        Page<History> historyPage = historyRepository.findAll(request);
+//        List<History> cntList = (lang.equals("kr") ? historyRepository.getCountryListKr() : historyRepository.getCountryListEn());
+
+//        Page<History> historyPage = historyRepository.findAll(pageRequest);
+
+        Sort sort = Sort.by("id").ascending();
+
+        Pageable pageRequest = PageRequest.of(0, 9999, sort);
+
+        Page<History> historyPage = historyRepository.findByLanguage(lang, pageRequest);
+
         PagedModel<HistoryListResource> pagedModel = assembler.toModel(historyPage, h -> new HistoryListResource(h));
         return ResponseEntity.ok().body(pagedModel);
     }
@@ -101,15 +111,78 @@ public class HistoryController {
     public ResponseEntity historyGet(@PathVariable(name = "id", required = false) Long id,
                                            @PathVariable(name = "lang", required = true) String lang){
 
-        Optional<History> optionalHistory = historyRepository.findById(id);
+        Optional<History> optionalHistory = historyRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistory.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 정보가 없습니다.","400"));
+            log.error("status = {}, message = {}", "400", "일치하는 연혁 정보가 없습니다. id와 언어를 확인 해주세요.");
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 정보가 없습니다. id와 언어를 확인 해주세요.","400"));
         }
         History history = optionalHistory.get();
 
-
         return ResponseEntity.ok(new HistoryResource(history));
     }
+
+    /**
+     * 연혁 단건 등록
+     */
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
+            produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
+    public ResponseEntity historyInsert(@RequestPart(name = "requestDto") @Valid HistorytDto requestDto, Errors errors,
+                                        @RequestPart(name = "thumbnailFile",required = false) MultipartFile thumbnailFile,
+                                        @PathVariable(name = "lang", required = true) String lang) {
+
+        if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "연혁 단건 등록 필수 값을 확인 해 주세요.");
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        History history = History.builder()
+                .title(requestDto.getTitle())
+                .content(requestDto.getContent())
+                .hiStartYear(requestDto.getHiStartYear())
+                .hiEndYear(requestDto.getHiEndYear())
+                .language(lang)
+                .build();
+
+        int width = 0;
+        int height = 0;
+
+        if (thumbnailFile != null) {
+            try {
+
+                boolean  extCheck = fileStore._typeOk(thumbWhiteList, thumbnailFile.getOriginalFilename());
+                if (extCheck) {
+                    BufferedImage bufferedImage = ImageIO.read(thumbnailFile.getInputStream());
+
+                    width = bufferedImage.getWidth();
+                    height = bufferedImage.getHeight();
+                }
+
+                UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
+
+                if (uploadFile.isWrongType()) {
+                    log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
+                    return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
+                }
+
+                history.changeFileInfo(uploadFile);
+
+            } catch (IOException e) {
+                return ResponseEntity.internalServerError().body(new ErrorResponse(e.getMessage(),"500 (IOException)"));
+            }
+        }
+
+        History savedHistory = historyRepository.save(history);
+
+        HistoryUpdateResponse updateResource = HistoryUpdateResponse.builder()
+                .history(savedHistory)
+                .width(width)
+                .height(height)
+                .build();
+
+        return ResponseEntity.ok(updateResource);
+    }
+
+
 
     /**
      * 연혁 단건 수정
@@ -119,19 +192,19 @@ public class HistoryController {
             produces = MediaTypes.HAL_JSON_VALUE+CHARSET_UTF8)
     public ResponseEntity historyUpdate(
             @PathVariable Long id,
-            @RequestPart(name = "requestDto") @Valid HistorytDto requestDto,
-            Errors errors,
+            @RequestPart(name = "requestDto") @Valid HistorytUpdateDto requestDto, Errors errors,
             @RequestPart(name = "thumbnailFile",required = false) MultipartFile thumbnailFile,
-            Model model,
             @PathVariable(name = "lang", required = true) String lang) {
 
 
-        Optional<History> optionalHistory = historyRepository.findById(id);
+        Optional<History> optionalHistory = historyRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistory.isPresent()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("일치하는 연혁 정보가 없습니다. 연혁 id를 확인해주세요."));
+            log.error("status = {}, message = {}", "400", "일치하는 연혁 정보가 없습니다. id와 언어를 확인 해주세요.");
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 정보가 없습니다. id와 언어를 확인 해주세요.","400"));
         }
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "연혁 단건 수정 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
@@ -156,10 +229,11 @@ public class HistoryController {
                 UploadFile uploadFile = fileStore.storeFile(thumbnailFile, savePath, thumbWhiteList);
 
                 if (uploadFile.isWrongType()) {
+                    log.error("status = {}, message = {}", "400", "파일명, 확장자, 사이즈를 확인 해주세요.");
                     return ResponseEntity.badRequest().body(new ErrorResponse("파일명, 확장자, 사이즈를 확인 해주세요.","400"));
                 }
-                
-//                checkImageSize(thumbnailFile);
+
+                deleteFile(history);//기존 파일 삭제
 
                 history.changeFileInfo(uploadFile);
 
@@ -179,18 +253,6 @@ public class HistoryController {
         return ResponseEntity.ok(updateResource);
     }
 
-    private void checkImageSize(MultipartFile file) {
-        try {
-            BufferedImage bufferedImage = ImageIO.read(file.getInputStream());
-
-            int width = bufferedImage.getWidth();
-            int height = bufferedImage.getHeight();
-            System.out.println(String.format("width = %d height = %d", width, height));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 
     /**
      * 연혁상세 리스트 조회
@@ -200,13 +262,11 @@ public class HistoryController {
                                                PagedResourcesAssembler<HistoryDetail> assembler,
                                                @PathVariable(name = "lang", required = true) String lang) {
 
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Sort sort = Sort.by("hdYear").descending().and(Sort.by("hdMonth").descending()).and(Sort.by("hdSequence").ascending());
+        Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        Sort sort = Sort.by("hdYear").descending().and(Sort.by("hdMonth").descending()).and(Sort.by("hdSequence").descending());
-
-        Page<HistoryDetail> historyPage = historyDetailRepository.findAll(pageable);
-
-        PagedModel<HistoryDetailResource> pagedModel = assembler.toModel(historyPage, h -> new HistoryDetailResource(h));
+        Page<HistoryDetail> historyPage = historyDetailRepository.findByLanguage(lang, pageRequest);
+        PagedModel<EntityModel<HistoryDetail>> pagedModel = assembler.toModel(historyPage);
 
         return ResponseEntity.ok().body(pagedModel);
     }
@@ -220,9 +280,10 @@ public class HistoryController {
                                            @PathVariable(name = "lang", required = true) String lang){
 
 
-        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistoryDetail.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+            log.error("status = {}, message = {}", "400", "일치하는 연혁 세부 정보가 없습니다. id와 언어를 확인 해주세요.");
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다. id와 언어를 확인 해주세요.","400"));
         }
         HistoryDetail historyDetail = optionalHistoryDetail.get();
 
@@ -245,17 +306,19 @@ public class HistoryController {
                                               @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "연혁상세 등록 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
         //해당 날짜에 맞는 history 등록
         String dtoHdYear = detailDto.getHdYear();
-        History searchHistory = historyRepository.searchHistoryBetween(dtoHdYear);
+        History searchHistory = historyRepository.searchHistoryBetween(dtoHdYear, lang);
 
-        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
-        if (detailSequenceCheck != null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("순서가 동일한 연혁 상세가 있습니다. 순서를 변경하세요.","400"));
-        }
+//        HistoryDetail detailSequenceCheck = historyDetailRepository.findByHdYearAndHdMonthAndHdSequence(detailDto.getHdYear(), detailDto.getHdMonth(), detailDto.getHdSequence());
+//        if (detailSequenceCheck != null) {
+//            log.error("status = {}, message = {}", "400", "순서가 동일한 연혁 상세가 있습니다. 순서를 변경하세요.");
+//            return ResponseEntity.badRequest().body(new ErrorResponse("순서가 동일한 연혁 상세가 있습니다. 순서를 변경하세요.","400"));
+//        }
 
         HistoryDetail historyDetail = HistoryDetail.builder()
                 .hdYear(detailDto.getHdYear())
@@ -281,12 +344,14 @@ public class HistoryController {
                                               @PathVariable(name = "lang", required = true) String lang) {
 
         if (errors.hasErrors()) {
+            log.error("status = {}, message = {}", "400", "연혁상세 단건 필수 값을 확인 해 주세요.");
             return ResponseEntity.badRequest().body(errors);
         }
 
-        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistoryDetail.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+            log.error("status = {}, message = {}", "400", "일치하는 연혁 세부 정보가 없습니다. id와 언어를 확인 해주세요.");
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다. id와 언어를 확인 해주세요.","400"));
         }
 
         HistoryDetail getDetail = optionalHistoryDetail.get();
@@ -311,9 +376,10 @@ public class HistoryController {
     public ResponseEntity historyDetailDelete(@PathVariable(name = "id", required = false) Long id,
                                               @PathVariable(name = "lang", required = true) String lang){
 
-        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findById(id);
+        Optional<HistoryDetail> optionalHistoryDetail = historyDetailRepository.findByIdAndLanguage(id, lang);
         if (!optionalHistoryDetail.isPresent()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다.","400"));
+            log.error("status = {}, message = {}", "400", "일치하는 연혁 세부 정보가 없습니다. id와 언어를 확인 해주세요.");
+            return ResponseEntity.badRequest().body(new ErrorResponse("일치하는 연혁 세부 정보가 없습니다. id와 언어를 확인 해주세요.","400"));
         }
         HistoryDetail historyDetail = optionalHistoryDetail.get();
 
@@ -342,8 +408,6 @@ public class HistoryController {
     }
 
 
-
-
     /**
      *  연혁ID에 따른 연혁 세부 조회
      */
@@ -354,6 +418,28 @@ public class HistoryController {
         List<HistoryDetail> detailList = historyDetailRepository.findByHistoryId(hitoryId);
 
         return ResponseEntity.ok().body(detailList);
+    }
+
+    public void deleteFile(History history) {
+
+        String fileSavedPath = fileDir + history.getHiFileSavedPath() + "/" + history.getHiSaveFileName();
+
+        File file = new File(fileSavedPath);
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
+    private void checkImageSize(MultipartFile file) {
+        try {
+            BufferedImage bufferedImage = ImageIO.read(file.getInputStream());
+
+            int width = bufferedImage.getWidth();
+            int height = bufferedImage.getHeight();
+            System.out.println(String.format("width = %d height = %d", width, height));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 //    /**

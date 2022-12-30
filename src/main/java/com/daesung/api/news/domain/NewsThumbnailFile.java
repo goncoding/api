@@ -35,7 +35,7 @@ public class NewsThumbnailFile extends RegTimeEntity {
     private String thumbnailFileSavedName;
     @Column(length = 1024)
     private String thumbnailFileSummary;
-    private String regUser;
+//    private String regUser;
 
 
     public void updateThumbnailSummary(String thumbSummary) {
